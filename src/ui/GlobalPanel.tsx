@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { defaultProject, newModule, uid } from '../model/defaults';
+import { roundFixedTracks } from '../model/ops';
 import type { Project } from '../model/types';
 import { migrate, useStore } from '../store';
 import EnvironmentPanel from './EnvironmentPanel';
@@ -141,6 +142,21 @@ export default function GlobalPanel() {
         >
           Ajustar alto de módulos al techo
         </button>
+        <Field label="Redondear repartos" hint="Las filas y columnas «repartir» se redondean; la última de cada módulo absorbe la diferencia para que el total cuadre">
+          <select value={g.rounding ?? 0} onChange={(e) => update((d) => void (d.globals.rounding = Number(e.target.value)))}>
+            <option value={0}>Sin redondear</option>
+            <option value={5}>A medio cm</option>
+            <option value={10}>Al cm</option>
+          </select>
+        </Field>
+        {(g.rounding ?? 0) > 0 && (
+          <button
+            title="Redondea también las medidas que fijaste a mano (se puede deshacer)"
+            onClick={() => update((d) => roundFixedTracks(d as Project, d.globals.rounding ?? 0))}
+          >
+            Redondear también las medidas fijas
+          </button>
+        )}
       </Section>
 
       <Section title="Rodapié">

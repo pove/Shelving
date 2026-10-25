@@ -6,7 +6,8 @@ import { findCarcassDraft, setTrackSize } from '../model/ops';
 import type { Board, Merge, Project } from '../model/types';
 import { useStore } from '../store';
 import ActionBar from './ActionBar';
-import { fmt } from './common';
+import { fmt, slug } from './common';
+import { save3DImage, saveBothImage, saveSvgImage, withoutSelection } from './exportImage';
 
 
 interface DragState {
@@ -52,7 +53,11 @@ export default function Editor2D() {
   const vb = `${view.x0 - PAD} ${-view.z1 - PAD} ${view.x1 - view.x0 + 2 * PAD} ${view.z1 - view.z0 + 2 * PAD}`;
 
   // los tableros se dibujan de atrás hacia delante (las puertas encima)
-  const sorted = useMemo(() => [...boards].sort((a, b) => a.box.y + a.box.dy - (b.box.y + b.box.dy)), [boards]);
+  const showDoors = useStore((s) => s.showDoors);
+  const sorted = useMemo(
+    () => boards.filter((b) => showDoors || (b.kind !== 'door' && b.kind !== 'drawerFront')).sort((a, b) => a.box.y + a.box.dy - (b.box.y + b.box.dy)),
+    [boards, showDoors],
+  );
 
   useEffect(() => {
     const up = () => (drag.current = null);
@@ -106,6 +111,37 @@ export default function Editor2D() {
             {c.name}
           </button>
         ))}
+        <span className="focus-save">
+          <span className="muted">Guardar imagen:</span>
+          {(
+            [
+              ['3d', '3D', 'La vista 3D tal como se ve ahora (PNG)'],
+              ['alzado', 'Alzado', 'El alzado tal como se ve ahora (PNG)'],
+              ['ambas', '3D + alzado', 'Las dos en una sola imagen, el 3D arriba (PNG)'],
+              ['svg', 'Alzado SVG', 'El alzado como dibujo vectorial: se amplía sin perder calidad'],
+            ] as const
+          ).map(([kind, label, title]) => (
+            <button
+              key={kind}
+              className="chip"
+              title={title}
+              onClick={() => {
+                const svg = svgRef.current;
+                if (!svg) return;
+                const base = `${slug(p.name)}${focusL ? '_' + slug(focusL.carcass.name) : ''}`;
+                const run =
+                  kind === '3d'
+                    ? () => save3DImage(`${slug(p.name)}_3d.png`)
+                    : kind === 'ambas'
+                      ? () => saveBothImage(svg, `${base}_3d_alzado.png`)
+                      : () => saveSvgImage(svg, `${base}_alzado.${kind === 'svg' ? 'svg' : 'png'}`, kind === 'svg' ? 'svg' : 'png');
+                withoutSelection(run).catch((e) => alert(e.message));
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </span>
       </div>
       <ActionBar />
       <svg ref={svgRef} viewBox={vb} preserveAspectRatio="xMidYMid meet" onPointerDown={() => select({ cells: null, boardId: null })}>

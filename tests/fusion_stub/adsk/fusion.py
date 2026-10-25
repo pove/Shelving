@@ -78,10 +78,14 @@ class _Bodies:
 class _Occs:
     def __init__(self, comp):
         self.comp = comp
+        self.count = 0
 
     def addNewComponent(self, m):
+        self.count += 1
         c = Component(self.comp.design, self.comp)
-        return type("Occ", (), {"component": c})()
+        occ = type("Occ", (), {"component": c, "isLightBulbOn": True})()
+        c.occ = occ
+        return occ
 
 
 class Component:
@@ -89,6 +93,7 @@ class Component:
         self.design = design
         self.parent = parent
         self.name = ""
+        self.occ = None
         self.occurrences = _Occs(self)
         self.features = _Features()
         self.bRepBodies = _Bodies(self)

@@ -249,3 +249,40 @@ describe('acciones de puertas de la barra', () => {
     expect(m.regions['0:0:0:0']).toBeUndefined();
   });
 });
+
+describe('redondeo de medidas', () => {
+  it('reparte en múltiplos de 5 o 10 mm y la última columna absorbe la diferencia', async () => {
+    const { resolveTracks } = await import('../src/model/grid');
+    const t = Array.from({ length: 5 }, () => ({ size: 0, fixed: false }));
+    expect(resolveTracks(t, 1648).sizes[0]).toBeCloseTo(329.6, 6);
+    const r10 = resolveTracks(t, 1648, 10);
+    expect(r10.sizes).toEqual([330, 330, 330, 330, 328]);
+    expect(r10.mismatch).toBe(0);
+    const r5 = resolveTracks([...t, { size: 100.4, fixed: true }], 1748.4, 5);
+    expect(r5.sizes.slice(0, 4)).toEqual([330, 330, 330, 330]);
+    expect(r5.mismatch).toBe(0);
+  });
+
+  it('el proyecto inicial redondeado sigue sin solapes y con los totales exactos', async () => {
+    const { roundFixedTracks } = await import('../src/model/ops');
+    const p = defaultProject();
+    p.globals.rounding = 10;
+    roundFixedTracks(p, 10);
+    const { boards, layouts } = computeBoards(p);
+    expect(findOverlaps(boards)).toEqual([]);
+    for (const L of layouts.values()) {
+      expect(L.colW.mismatch).toBe(0);
+      expect(L.rowH.mismatch).toBe(0);
+    }
+    const der = layouts.get('der')!;
+    expect(der.colW.sizes).toEqual([330, 330, 330, 330, 328]);
+    const izq = layouts.get('izq')!;
+    expect(izq.colW.sizes.slice(0, 3)).toEqual([710, 310, 310]);
+    // el puente sigue alineado con la balda franja y con el techo de los módulos
+    const franja = boards.find((b) => b.groupId === 'izq' && b.name === 'Balda franja')!;
+    const base = boards.find((b) => b.groupId === 'puente' && b.name === 'Base')!;
+    expect(base.box.z).toBeCloseTo(franja.box.z, 6);
+    expect(layouts.get('puente')!.z1).toBeCloseTo(2490, 6);
+    expect(layouts.get('puente')!.rowH.sizes[0]).toBeCloseTo(300, 6);
+  });
+});

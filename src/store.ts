@@ -27,6 +27,9 @@ interface State {
   multiSelect: boolean;
   /** Casco al que se ajusta el alzado (null = todo). */
   focusId: string | null;
+  /** Mostrar puertas y frentes de cajón en el 3D, el alzado y el script de Fusion. */
+  showDoors: boolean;
+  setShowDoors: (v: boolean) => void;
   setMultiSelect: (v: boolean) => void;
   setFocus: (id: string | null) => void;
   update: (fn: (d: Draft<Project>) => void) => void;
@@ -75,6 +78,8 @@ export const useStore = create<State>((set, get) => ({
   viewRequest: { name: 'iso', n: 0 },
   multiSelect: false,
   focusId: null,
+  showDoors: true,
+  setShowDoors: (showDoors) => set({ showDoors }),
   setMultiSelect: (multiSelect) => set({ multiSelect }),
   setFocus: (focusId) => set({ focusId }),
   update: (fn) => {

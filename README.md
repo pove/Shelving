@@ -46,6 +46,13 @@ La vista 3D, el alzado, el despiece, los cortes y el script de Fusion se aliment
   Fusion (`tests/fusion_stub/`) en modo paramétrico y directo, y compara la geometría.
 - `tests/cutlist.test.ts`, `tests/nesting.test.ts`: despiece/CSV y cortes sin solapes.
 
+## Redondeo de medidas
+
+En «Medidas y holguras», «Redondear repartos» (medio cm o cm) redondea las filas y columnas
+que se reparten solas; la última de cada módulo absorbe la diferencia para que el total cuadre.
+«Redondear también las medidas fijas» redondea las que se fijaron a mano y mueve los puentes
+para que sigan alineados con su balda y con el techo de los módulos.
+
 ## Uso en el móvil
 
 - «Ver: Todo / Izquierdo / Puente / Derecho» amplía el alzado a un solo módulo.

@@ -9,7 +9,7 @@ const n = (v: number) => {
 };
 const s = (v: string) => JSON.stringify(v);
 
-export function fusionScript(p: Project, boards: Board[], env: EnvResult, date = new Date()): string {
+export function fusionScript(p: Project, boards: Board[], env: EnvResult, date = new Date(), opts: { showDoors?: boolean } = {}): string {
   const carcasses = [...p.modules, ...p.bridges];
   const REF = Math.max(p.globals.depth, ...carcasses.map((c) => Math.max(c.depth, ...c.cols.map((k) => k.depth ?? 0))));
   // App: Y = distancia a la pared. Fusion: Y = 0 frente, Y = FONDO pared (como Estanteria.py).
@@ -59,8 +59,10 @@ export function fusionScript(p: Project, boards: Board[], env: EnvResult, date =
 import adsk.core, adsk.fusion, traceback, os, unicodedata
 
 # ================= OPCIONES =================
-NUEVO_DOCUMENTO = False   # True = crea un diseño nuevo antes de construir (evita duplicar el mueble)
+NUEVO_DOCUMENTO = True    # True = construye en un diseño nuevo. Con False usa el diseño abierto
+                          # (si ya tiene piezas, pregunta antes: quedarían piezas viejas mezcladas)
 ENTORNO         = ${p.environment.show ? 'True' : 'False'}    # pared, suelo, rodapié y puertas (no entra en el despiece)
+PUERTAS_VISIBLES = ${opts.showDoors === false ? 'False' : 'True'}   # las puertas de cada módulo van en su componente «Puertas»: enciéndelo/apágalo con la bombilla
 GUARDAR_CSV     = True
 FONDO           = ${n(REF)}
 
@@ -129,9 +131,13 @@ def _componente(padre, nombre, cuerpo):
 
 
 def grupo(padre, nombre):
+    return grupo_occ(padre, nombre).component
+
+
+def grupo_occ(padre, nombre):
     occ = padre.occurrences.addNewComponent(adsk.core.Matrix3D.create())
     occ.component.name = nombre
-    return occ.component
+    return occ
 
 
 def tablero(comp, nombre, x, y, z, dx, dy, dz, rebaje):
@@ -226,13 +232,35 @@ def run(context):
             ui.messageBox("Abre un diseño de Fusion antes de ejecutar el script.")
             return
         root = _design.rootComponent
+        if not NUEVO_DOCUMENTO and (root.occurrences.count > 0 or root.bRepBodies.count > 0):
+            r = ui.messageBox(
+                "Este diseño ya tiene piezas. Si sigues, el mueble nuevo se mezclará con lo que haya "
+                "(Fusion numerará los nombres repetidos, p. ej. «Encimera 1»).\\n\\n"
+                "¿Construir aquí de todas formas? (No = cancelar; pon NUEVO_DOCUMENTO = True "
+                "para construir siempre en un diseño nuevo)",
+                "Diseño con piezas",
+                adsk.core.MessageBoxButtonTypes.YesNoButtonType)
+            if r != adsk.core.DialogResults.DialogYes:
+                return
 
         comps = [grupo(root, g) for g in GRUPOS]
+        puertas = {}  # componente «Puertas» de cada grupo, creado al encontrar la primera
         cuerpos = {"mueble": [], "puerta": []}
         for gi, nombre, x, y, z, dx, dy, dz, rebaje, ap in TABLEROS:
-            b = tablero(comps[gi], nombre, x, y, z, dx, dy, dz, rebaje)
+            destino = comps[gi]
+            if ap == "puerta":
+                if gi not in puertas:
+                    puertas[gi] = grupo_occ(comps[gi], GRUPOS[gi] + " - Puertas")
+                destino = puertas[gi].component
+            b = tablero(destino, nombre, x, y, z, dx, dy, dz, rebaje)
             if b:
                 cuerpos[ap].append(b)
+
+        for occ in puertas.values():
+            try:
+                occ.isLightBulbOn = PUERTAS_VISIBLES
+            except:
+                pass
 
         env = {"pared": [], "suelo": []}
         if ENTORNO and (ENTORNO_CAJAS or ENTORNO_HOJA):

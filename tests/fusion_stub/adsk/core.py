@@ -35,9 +35,21 @@ class DocumentTypes:
     FusionDesignDocumentType = 0
 
 
+class MessageBoxButtonTypes:
+    YesNoButtonType = 3
+
+
+class DialogResults:
+    DialogYes = 2
+    DialogNo = 3
+
+
 class _UI:
-    def messageBox(self, m):
+    def messageBox(self, m, *args):
         REGISTRO["mensajes"].append(m)
+        if args:
+            REGISTRO.setdefault("preguntas", []).append(m)
+            return DialogResults.DialogYes if REGISTRO.get("responder_si") else DialogResults.DialogNo
 
 
 class _Libs:
@@ -46,7 +58,9 @@ class _Libs:
 
 class _Docs:
     def add(self, t):
-        pass
+        from adsk.fusion import Design
+        REGISTRO["documentos_nuevos"] = REGISTRO.get("documentos_nuevos", 0) + 1
+        Application.get().activeProduct = Design()
 
 
 class Application:

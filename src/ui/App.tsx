@@ -28,6 +28,8 @@ export default function App() {
   const canRedo = useStore((s) => s.future.length > 0);
   const requestView = useStore((s) => s.requestView);
   const showEnv = useStore((s) => s.project.environment.show);
+  const showDoors = useStore((s) => s.showDoors);
+  const setShowDoors = useStore((s) => s.setShowDoors);
   const update = useStore((s) => s.update);
   const { warnings, boards } = useDerived();
 
@@ -96,6 +98,10 @@ export default function App() {
                     <label className="check">
                       <input type="checkbox" checked={showEnv} onChange={(e) => update((d) => void (d.environment.show = e.target.checked))} />
                       Entorno
+                    </label>
+                    <label className="check" title="Mostrar u ocultar puertas y frentes de cajón (también en el alzado y en el script de Fusion)">
+                      <input type="checkbox" checked={showDoors} onChange={(e) => setShowDoors(e.target.checked)} />
+                      Puertas
                     </label>
                   </div>
                   <Viewer3D />
