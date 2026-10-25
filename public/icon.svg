@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Estantería con puente sobre el hueco de la puerta, en madera clara -->
+  <rect width="64" height="64" rx="14" fill="#1f4f86"/>
+  <rect x="6" y="51" width="52" height="3" rx="1.5" fill="#173b63"/>
+  <g fill="none" stroke="#e8c98f" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">
+    <!-- torres y puente -->
+    <path d="M10 52 V12 H54 V52 M24 52 V22 H40 V52 M10 52 H24 M40 52 H54"/>
+    <!-- baldas -->
+    <path d="M10 26 H24 M10 39 H24 M40 26 H54 M40 39 H54"/>
+    <!-- divisores: cubos y puente -->
+    <path d="M17 39 V52 M47 12 V26 M47 39 V52 M29.3 12 V22 M34.7 12 V22"/>
+  </g>
+</svg>
