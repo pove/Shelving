@@ -1,5 +1,5 @@
 // Operaciones de edición sobre el proyecto (pensadas para usarse dentro de immer).
-import { expandToMerges, listRegions, parseKey, rectContains, rectsIntersect, regionKey } from './grid';
+import { expandToMerges, layoutCarcass, listRegions, parseKey, rectContains, rectsIntersect, regionKey } from './grid';
 import type { Carcass, DoorSpec, Merge, Project, RegionProps } from './types';
 
 type Axis = 'col' | 'row';
@@ -153,4 +153,27 @@ export function setRegionDoor(c: Carcass, rect: Merge, door: DoorSpec | undefine
   r.door = door ? { ...door } : undefined;
   cleanRegion(c, k);
   if (door) c.fronts = (c.fronts ?? []).filter((fr) => !rectsIntersect(fr, rect));
+}
+
+/**
+ * Redondea las medidas fijas de todas las filas y columnas a múltiplos de step (mm).
+ * Los puentes que estaban alineados con una balda del módulo izquierdo (y con su techo)
+ * se mueven con ella, para que sigan alineados.
+ */
+export function roundFixedTracks(p: Project, step: number) {
+  if (step <= 0) return;
+  const links = p.bridges.map((b) => {
+    const m = p.modules.find((x) => x.id === b.leftId);
+    if (!m) return null;
+    const L = layoutCarcass(p, m);
+    const sep = L.rowSeps.findIndex((s) => Math.abs(s.a - b.z) < 0.5);
+    return { b, m, sep, top: Math.abs(b.z + b.height - m.height) < 0.5 };
+  });
+  for (const c of [...p.modules, ...p.bridges])
+    for (const t of [...c.cols, ...c.rows]) if (t.fixed) t.size = Math.max(step, Math.round(t.size / step) * step);
+  for (const k of links) {
+    if (!k || k.sep < 0) continue;
+    k.b.z = layoutCarcass(p, k.m).rowSeps[k.sep].a;
+    if (k.top) k.b.height = k.m.height - k.b.z;
+  }
 }

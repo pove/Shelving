@@ -118,6 +118,8 @@ export interface Globals {
   depth: number;
   ceiling: number;
   ceilingGap: number;
+  /** Redondeo (mm) de las medidas que se reparten: 0 = sin redondear, 5 = medio cm, 10 = cm. */
+  rounding?: number;
   doorGap: number;
   plinth: {
     notch: boolean;

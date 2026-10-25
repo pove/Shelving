@@ -8,11 +8,19 @@ export interface ResolvedTracks {
   mismatch: number;
 }
 
-export function resolveTracks(tracks: Track[], available: number): ResolvedTracks {
+/**
+ * Medidas interiores resueltas. Con `step` (mm) las pistas «repartir» se redondean a ese
+ * múltiplo y la última de ellas absorbe la diferencia para que el total siga cuadrando.
+ */
+export function resolveTracks(tracks: Track[], available: number, step = 0): ResolvedTracks {
   const fixedSum = tracks.reduce((s, t) => s + (t.fixed ? t.size : 0), 0);
-  const autos = tracks.filter((t) => !t.fixed).length;
-  const share = autos > 0 ? (available - fixedSum) / autos : 0;
-  const sizes = tracks.map((t) => (t.fixed ? t.size : share));
+  const autoIdx = tracks.flatMap((t, i) => (t.fixed ? [] : [i]));
+  const autos = autoIdx.length;
+  const rest = available - fixedSum;
+  const share = autos > 0 ? rest / autos : 0;
+  const rounded = step > 0 && autos > 0 ? Math.round(share / step) * step : share;
+  const last = autoIdx[autos - 1];
+  const sizes = tracks.map((t, i) => (t.fixed ? t.size : i === last ? rest - rounded * (autos - 1) : rounded));
   const sum = sizes.reduce((s, v) => s + v, 0);
   let mismatch = available - sum;
   if (Math.abs(mismatch) < 1e-6) mismatch = 0;
@@ -95,8 +103,8 @@ export function layoutCarcass(p: Project, c: Carcass): CarcassLayout {
   const rowSepT = c.rows.slice(1).map((_, i) => sepThickness(c, g, 'row', i));
   const availW = x1 - x0 - sideL - sideR - colSepT.reduce((s, v) => s + v, 0);
   const availH = z1 - z0 - tBase - tTop - rowSepT.reduce((s, v) => s + v, 0);
-  const colW = resolveTracks(c.cols, availW);
-  const rowH = resolveTracks(c.rows, availH);
+  const colW = resolveTracks(c.cols, availW, g.rounding ?? 0);
+  const rowH = resolveTracks(c.rows, availH, g.rounding ?? 0);
 
   const cols: Span[] = [];
   const colSeps: Span[] = [];
