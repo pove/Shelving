@@ -58,7 +58,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar no-print">
-        <div className="brand">Estanterías a medida</div>
+        <div className="brand">
+          <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" width={26} height={26} />
+          <span>Estanterías a medida</span>
+        </div>
         <nav className="tabs">
           {TABS.map(([k, label]) => (
             <button key={k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>
