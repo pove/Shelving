@@ -90,13 +90,14 @@ function makeBoard(
 
   const sizes = { x: box.dx, y: box.dy, z: box.dz };
   const others = (['x', 'y', 'z'] as const).filter((a) => a !== normal);
-  const [la, wa] = sizes[others[0]] >= sizes[others[1]] ? others : [others[1], others[0]];
+  const frontAxis = normal === 'y' ? 'x' : others.find((a) => a !== 'y')!;
+  let [la, wa] = sizes[others[0]] >= sizes[others[1]] ? others : [others[1], others[0]];
+  if (Math.abs(sizes[la] - sizes[wa]) < 0.01 && wa === frontAxis) [la, wa] = [wa, la];
   const t = sizes[normal];
   let edges: EdgeSet;
   if (o.allEdges) edges = { L1: true, L2: true, A1: true, A2: true };
   else {
     // canto frontal visible: en piezas de normal y, el canto superior (eje x)
-    const frontAxis = normal === 'y' ? 'x' : others.find((a) => a !== 'y')!;
     edges = frontAxis === la ? { ...NO_EDGES, L1: true } : { ...NO_EDGES, A1: true };
     if (o.topEdge === false) edges = { ...NO_EDGES };
   }
@@ -284,10 +285,16 @@ function carcassBoards(p: Project, L: CarcassLayout, out: Board[]) {
       const za = L.rows[rs].a;
       const zb = L.rows[re].b;
       const y = L.colY[cb];
+      let auto = rs === re ? `Divisor F${rs + 1}-${cb}` : `Divisor F${rs + 1}-F${re + 1}-${cb}`;
+      // junto a un hueco con nombre (p. ej. "Nicho") -> "Divisor nicho"
+      const named = [regions[rid[cb - 1][rs]], regions[rid[cb][rs]]]
+        .filter((reg) => reg.r0 === rs && reg.r1 === re && c.regions[regionKey(reg)]?.name)
+        .sort((a, b) => (a.c1 - a.c0) - (b.c1 - b.c0));
+      if (named.length) auto = `Divisor ${lc(c.regions[regionKey(named[0])]!.name!)}`;
       add(
         `v:${cb}:${rs}`,
         'divider',
-        custom ?? (rs === re ? `Divisor F${rs + 1}-${cb}` : `Divisor F${rs + 1}-F${re + 1}-${cb}`),
+        custom ?? auto,
         { x: s.a, y: y.a, z: za, dx: s.b - s.a, dy: y.b - y.a, dz: zb - za },
         src,
         { plinth: true },

@@ -7,7 +7,6 @@ import type { Board, Merge, Project } from '../model/types';
 import { useStore } from '../store';
 import { fmt } from './common';
 
-const PAD = 260;
 
 interface DragState {
   carcassId: string;
@@ -41,6 +40,8 @@ export default function Editor2D() {
     return { x0, x1, z1 };
   }, [boards, p.environment, p.globals.ceiling]);
 
+  const fs = Math.max(40, (bounds.x1 - bounds.x0) / 75);
+  const PAD = fs * 5;
   const vb = `${bounds.x0 - PAD} ${-bounds.z1 - PAD} ${bounds.x1 - bounds.x0 + 2 * PAD} ${bounds.z1 + 2 * PAD}`;
 
   // los tableros se dibujan de atrás hacia delante (las puertas encima)
@@ -82,8 +83,6 @@ export default function Editor2D() {
       if (c) setTrackSize(c, axis, i, n);
     });
   };
-
-  const fs = Math.max(40, (bounds.x1 - bounds.x0) / 75);
 
   return (
     <div className="editor2d">

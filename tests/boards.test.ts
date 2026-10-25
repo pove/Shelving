@@ -58,7 +58,7 @@ describe('proyecto inicial vs Estanteria.py', () => {
       'Izquierdo - Armario techo', 'Izquierdo - Lateral B', 'Izquierdo - Base', 'Izquierdo - Techo',
       'Izquierdo - Encimera', 'Izquierdo - Balda franja', 'Izquierdo - Flotante lateral',
       'Izquierdo - Puerta armario bajo', 'Izquierdo - Puerta armario alto', 'Izquierdo - Armario alto balda 1',
-      'Derecho - Lateral A', 'Derecho - Flotante base', 'Puente - Base', 'Puente - Techo',
+      'Derecho - Lateral A', 'Derecho - Flotante base', 'Derecho - Divisor nicho', 'Puente - Base', 'Puente - Techo',
     ]) expect(names).toContain(n);
   });
 
