@@ -5,6 +5,7 @@ import { expandToMerges, findCarcass, listRegions, regionBounds, regionKey, type
 import { findCarcassDraft, setTrackSize } from '../model/ops';
 import type { Board, Merge, Project } from '../model/types';
 import { useStore } from '../store';
+import ActionBar from './ActionBar';
 import { fmt } from './common';
 
 
@@ -23,8 +24,10 @@ export default function Editor2D() {
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<DragState | null>(null);
   const [hover, setHover] = useState<string | null>(null);
-  /** Con el dedo no hay Mayús: cada toque amplía la selección. */
-  const [multi, setMulti] = useState(false);
+  const multi = useStore((s) => s.multiSelect);
+  const focusId = useStore((s) => s.focusId);
+  const setFocus = useStore((s) => s.setFocus);
+  const focusL = focusId ? layouts.get(focusId) : undefined;
 
   const bounds = useMemo(() => {
     let x0 = Infinity, x1 = -Infinity, z1 = 0;
@@ -38,13 +41,15 @@ export default function Editor2D() {
       x1 = Math.max(x1, p.environment.wallX1);
       z1 = Math.max(z1, p.globals.ceiling);
     }
-    if (!Number.isFinite(x0)) return { x0: 0, x1: 2000, z1: 2500 };
-    return { x0, x1, z1 };
+    if (!Number.isFinite(x0)) return { x0: 0, x1: 2000, z0: 0, z1: 2500 };
+    return { x0, x1, z0: 0, z1 };
   }, [boards, p.environment, p.globals.ceiling]);
+  // ajustado a un módulo/puente: se ve más grande (útil en el móvil)
+  const view = focusL ? { x0: focusL.x0, x1: focusL.x1, z0: focusL.z0, z1: focusL.z1 } : bounds;
 
-  const fs = Math.max(40, (bounds.x1 - bounds.x0) / 75);
+  const fs = Math.max(focusL ? 28 : 40, (view.x1 - view.x0) / (focusL ? 40 : 75));
   const PAD = fs * 5;
-  const vb = `${bounds.x0 - PAD} ${-bounds.z1 - PAD} ${bounds.x1 - bounds.x0 + 2 * PAD} ${bounds.z1 + 2 * PAD}`;
+  const vb = `${view.x0 - PAD} ${-view.z1 - PAD} ${view.x1 - view.x0 + 2 * PAD} ${view.z1 - view.z0 + 2 * PAD}`;
 
   // los tableros se dibujan de atrás hacia delante (las puertas encima)
   const sorted = useMemo(() => [...boards].sort((a, b) => a.box.y + a.box.dy - (b.box.y + b.box.dy)), [boards]);
@@ -88,6 +93,21 @@ export default function Editor2D() {
 
   return (
     <div className="editor2d">
+      <div className="focus-bar" role="group" aria-label="Ver en el alzado">
+        <span className="muted">Ver:</span>
+        <button className={!focusId ? 'chip on' : 'chip'} onClick={() => setFocus(null)}>
+          Todo
+        </button>
+        {[...p.modules].sort((a, b) => a.x - b.x).flatMap((m) => {
+          const br = p.bridges.filter((b) => b.leftId === m.id);
+          return [m, ...br];
+        }).map((c) => (
+          <button key={c.id} className={focusId === c.id ? 'chip on' : 'chip'} onClick={() => setFocus(c.id)}>
+            {c.name}
+          </button>
+        ))}
+      </div>
+      <ActionBar />
       <svg ref={svgRef} viewBox={vb} preserveAspectRatio="xMidYMid meet" onPointerDown={() => select({ cells: null, boardId: null })}>
         <defs>
           <pattern id="hatch" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -145,10 +165,7 @@ export default function Editor2D() {
         ))}
       </svg>
       <div className="editor-help">
-        <label className="check">
-          <input type="checkbox" checked={multi} onChange={(e) => setMulti(e.target.checked)} /> Selección múltiple
-        </label>
-        <span>Clic: hueco · Mayús+clic o arrastrar: rango · Doble clic en una cota: editar · Clic en una balda o divisor: propiedades</span>
+        Clic: hueco · Mayús+clic, arrastrar o «Varios»: rango · Doble clic en una cota: editar · Clic en una balda o divisor: propiedades
       </div>
     </div>
   );

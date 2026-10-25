@@ -228,3 +228,24 @@ describe('puertas sobre varios huecos', () => {
     expect(p.modules[1].fronts).toEqual([]);
   });
 });
+
+describe('acciones de puertas de la barra', () => {
+  it('poner, cambiar bisagras y quitar puertas de una selección', async () => {
+    const { doorsIn, editDoorsIn, setRegionDoor, addSpanningFront, removeFronts } = await import('../src/model/ops');
+    const door = { type: 'door' as const, mount: 'overlay' as const, leaves: 1 as const, hinge: 'left' as const };
+    const m = defaultProject().modules[1];
+    const all = { c0: 0, r0: 0, c1: 4, r1: 1 };
+    setRegionDoor(m, { c0: 0, r0: 0, c1: 0, r1: 0 }, door);
+    addSpanningFront(m, { c0: 2, r0: 0, c1: 3, r1: 1 }, door, 'f');
+    expect(doorsIn(m, all).count).toBe(2);
+    editDoorsIn(m, all, (d) => void (d.hinge = 'right'));
+    expect(m.regions['0:0:0:0'].door!.hinge).toBe('right');
+    expect(m.fronts![0].door.hinge).toBe('right');
+    // una puerta propia sustituye a la grande que la tapaba
+    setRegionDoor(m, { c0: 2, r0: 0, c1: 2, r1: 0 }, door);
+    expect(m.fronts).toEqual([]);
+    removeFronts(m, all);
+    expect(doorsIn(m, all).count).toBe(0);
+    expect(m.regions['0:0:0:0']).toBeUndefined();
+  });
+});

@@ -46,6 +46,14 @@ La vista 3D, el alzado, el despiece, los cortes y el script de Fusion se aliment
   Fusion (`tests/fusion_stub/`) en modo paramétrico y directo, y compara la geometría.
 - `tests/cutlist.test.ts`, `tests/nesting.test.ts`: despiece/CSV y cortes sin solapes.
 
+## Uso en el móvil
+
+- «Ver: Todo / Izquierdo / Puente / Derecho» amplía el alzado a un solo módulo.
+- Al tocar un hueco aparece abajo la barra de acciones: **Varios** (cada toque amplía la
+  selección), **Fusionar**, **Separar**, **+ Puerta**, **+ Cajón** (con varios huecos:
+  **+ Una puerta**, **+ Puerta en cada**, **+ Cajones**), cambiar hojas y bisagras y
+  **Quitar puerta**. «Más…» lleva al panel con el resto de opciones del hueco.
+
 ## Integración continua y publicación
 
 - `.github/workflows/ci.yml`: en cada push a cualquier rama y en cada PR ejecuta typecheck, tests y build.

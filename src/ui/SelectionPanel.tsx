@@ -313,11 +313,11 @@ function FrontsEditor({ c, rect, multi }: { c: Carcass; rect: Merge; multi: bool
           <h4>Puertas en la selección</h4>
           <div className="btn-row">
             <button title="Una puerta independiente en cada hueco seleccionado" onClick={() => upd((d) => doorInEachRegion(d, rect, DEFAULT_DOOR))}>
-              Puerta en cada hueco
+              + Puerta en cada
             </button>
-            <button onClick={() => upd((d) => doorInEachRegion(d, rect, { ...DEFAULT_DOOR, type: 'drawer' }))}>Cajón en cada hueco</button>
+            <button onClick={() => upd((d) => doorInEachRegion(d, rect, { ...DEFAULT_DOOR, type: 'drawer' }))}>+ Cajones</button>
             <button title="Una sola puerta que tapa toda la selección; las baldas y divisores de dentro se mantienen" onClick={() => upd((d) => addSpanningFront(d, rect, DEFAULT_DOOR, uid()))}>
-              Una puerta para todo
+              + Una puerta
             </button>
             <button disabled={!fronts.length && !withDoor} className="danger" onClick={() => upd((d) => removeFronts(d, rect))}>
               Quitar puertas
