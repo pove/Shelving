@@ -129,3 +129,28 @@ export function removeFronts(c: Carcass, rect: Merge) {
     }
   }
 }
+
+/** Puertas/cajones que hay dentro de una selección: de huecos sueltos y puertas grandes. */
+export function doorsIn(c: Carcass, rect: Merge) {
+  const regionKeys = listRegions(c)
+    .filter((reg) => rectContains(rect, reg) && c.regions[regionKey(reg)]?.door)
+    .map(regionKey);
+  const fronts = (c.fronts ?? []).filter((fr) => rectsIntersect(fr, rect));
+  return { regionKeys, fronts, count: regionKeys.length + fronts.length };
+}
+
+/** Aplica un cambio a todas las puertas de la selección (hojas, bisagras…). */
+export function editDoorsIn(c: Carcass, rect: Merge, fn: (d: DoorSpec) => void) {
+  const { regionKeys, fronts } = doorsIn(c, rect);
+  for (const k of regionKeys) fn(c.regions[k].door!);
+  for (const fr of fronts) fn(fr.door);
+}
+
+/** Puerta o cajón de un solo hueco. */
+export function setRegionDoor(c: Carcass, rect: Merge, door: DoorSpec | undefined) {
+  const k = regionKey(rect);
+  const r = ensureRegion(c, k);
+  r.door = door ? { ...door } : undefined;
+  cleanRegion(c, k);
+  if (door) c.fronts = (c.fronts ?? []).filter((fr) => !rectsIntersect(fr, rect));
+}

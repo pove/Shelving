@@ -76,9 +76,13 @@ export default function App() {
       </header>
       <div className="body">
         <aside className="left no-print">
-          <GlobalPanel />
-          <div className="sel-title">Selección</div>
-          <SelectionPanel />
+          <div className="global-block">
+            <GlobalPanel />
+          </div>
+          <div className="sel-block" id="sel-panel">
+            <div className="sel-title">Selección</div>
+            <SelectionPanel />
+          </div>
         </aside>
         <main className="main">
           <Suspense fallback={<div className="pad">Cargando…</div>}>

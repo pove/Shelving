@@ -23,6 +23,12 @@ interface State {
   selection: Selection;
   tab: Tab;
   viewRequest: { name: ViewName; n: number };
+  /** Selección múltiple táctil: cada toque amplía la selección. */
+  multiSelect: boolean;
+  /** Casco al que se ajusta el alzado (null = todo). */
+  focusId: string | null;
+  setMultiSelect: (v: boolean) => void;
+  setFocus: (id: string | null) => void;
   update: (fn: (d: Draft<Project>) => void) => void;
   replace: (p: Project) => void;
   undo: () => void;
@@ -67,6 +73,10 @@ export const useStore = create<State>((set, get) => ({
   selection: { carcassId: null, cells: null, boardId: null },
   tab: 'design',
   viewRequest: { name: 'iso', n: 0 },
+  multiSelect: false,
+  focusId: null,
+  setMultiSelect: (multiSelect) => set({ multiSelect }),
+  setFocus: (focusId) => set({ focusId }),
   update: (fn) => {
     const cur = get().project;
     const next = produce(cur, fn);

@@ -23,6 +23,11 @@ body,
   margin: 0;
   height: 100%;
 }
+html,
+body {
+  /* al seleccionar, el panel de la selección cambia de alto: que la página no salte */
+  overflow-anchor: none;
+}
 button {
   font: inherit;
   padding: 4px 10px;
@@ -241,6 +246,9 @@ input.invalid {
 }
 .tracks {
   margin-top: 6px;
+  /* la tabla de columnas es ancha: en el móvil se desplaza ella, no la página */
+  overflow-x: auto;
+  max-width: 100%;
 }
 .tracks-head {
   display: flex;
@@ -318,6 +326,56 @@ table.tt td {
   color: var(--muted);
   font-size: 11px;
   border-top: 1px solid var(--line);
+}
+/* barra de acciones del alzado */
+.focus-bar {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 6px 10px 0;
+  overflow-x: auto;
+}
+.chip {
+  border-radius: 999px;
+  padding: 3px 12px;
+  white-space: nowrap;
+}
+.chip.on,
+button.toggle.on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.actionbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfaf7;
+}
+.ab-label {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.ab-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+button.add {
+  border-color: #b9d0ea;
+  color: var(--accent);
+}
+.global-block,
+.sel-block {
+  display: block;
 }
 /* informes */
 .report {
@@ -473,7 +531,52 @@ pre.code {
     overflow-x: auto;
   }
 }
+@media (max-width: 800px) {
+  /* el panel de la selección va antes que los ajustes generales */
+  .left {
+    display: flex;
+    flex-direction: column;
+  }
+  .sel-block {
+    order: -1;
+  }
+  .sel-block .sel-title {
+    border-top: none;
+  }
+  /* la barra de acciones queda fija abajo, siempre a mano */
+  .actionbar {
+    position: fixed;
+    z-index: 20;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 8px max(10px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px));
+    border-top: 1px solid var(--line);
+    border-bottom: none;
+    box-shadow: 0 -4px 14px rgba(60, 50, 30, 0.12);
+    background: #fff;
+  }
+  .ab-label {
+    width: 100%;
+  }
+  body {
+    padding-bottom: 120px;
+  }
+  .editor-help {
+    display: none;
+  }
+}
 @media (pointer: coarse) {
+  button {
+    min-height: 38px;
+    padding: 6px 12px;
+  }
+  button.icon {
+    min-width: 38px;
+  }
+  .chip {
+    min-height: 34px;
+  }
   /* con el dedo, arrastrar sobre el alzado desplaza la página (tocar sigue seleccionando) */
   .editor2d svg {
     touch-action: pan-y pinch-zoom;
