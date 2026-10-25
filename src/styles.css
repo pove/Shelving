@@ -313,6 +313,10 @@ table.tt button.icon {
   z-index: 2;
   top: 8px;
   left: 8px;
+  /* en el móvil no cabe en una línea: que baje a la siguiente en vez de ensanchar la página */
+  right: 8px;
+  width: fit-content;
+  flex-wrap: wrap;
   display: flex;
   gap: 4px;
   align-items: center;
@@ -354,7 +358,7 @@ table.tt button.icon {
 }
 .focus-save {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-shrink: 0;
   gap: 4px;
   align-items: center;
   margin-left: auto;
