@@ -23,6 +23,8 @@ export default function Editor2D() {
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<DragState | null>(null);
   const [hover, setHover] = useState<string | null>(null);
+  /** Con el dedo no hay Mayús: cada toque amplía la selección. */
+  const [multi, setMulti] = useState(false);
 
   const bounds = useMemo(() => {
     let x0 = Infinity, x1 = -Infinity, z1 = 0;
@@ -56,12 +58,12 @@ export default function Editor2D() {
   const onCellDown = (cid: string, reg: Merge, e: React.PointerEvent) => {
     e.stopPropagation();
     const c = findCarcass(p, cid)!;
-    if (e.shiftKey && sel.carcassId === cid && sel.cells) {
+    if ((e.shiftKey || multi) && sel.carcassId === cid && sel.cells) {
       const r = expandToMerges(c, union(sel.cells, reg));
       select({ cells: r, boardId: null });
       return;
     }
-    drag.current = { carcassId: cid, anchor: reg, moved: false };
+    if (e.pointerType === 'mouse' || e.pointerType === 'pen') drag.current = { carcassId: cid, anchor: reg, moved: false };
     select({ carcassId: cid, cells: reg, boardId: null });
   };
   const onCellEnter = (cid: string, reg: Merge) => {
@@ -143,7 +145,10 @@ export default function Editor2D() {
         ))}
       </svg>
       <div className="editor-help">
-        Clic: hueco · Mayús+clic o arrastrar: rango · Doble clic en una cota: editar · Clic en una balda o divisor: propiedades
+        <label className="check">
+          <input type="checkbox" checked={multi} onChange={(e) => setMulti(e.target.checked)} /> Selección múltiple
+        </label>
+        <span>Clic: hueco · Mayús+clic o arrastrar: rango · Doble clic en una cota: editar · Clic en una balda o divisor: propiedades</span>
       </div>
     </div>
   );
