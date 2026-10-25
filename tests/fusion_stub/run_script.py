@@ -12,6 +12,14 @@ spec.loader.exec_module(mod)
 mod.run(None)
 
 
+def visible(c):
+    while c is not None:
+        if c.occ is not None and not c.occ.isLightBulbOn:
+            return False
+        c = c.parent
+    return True
+
+
 def ruta(c):
     out = []
     while c is not None and c.parent is not None:
@@ -28,6 +36,7 @@ for c in REGISTRO["componentes"]:
         cen = (o.c.x * 10, o.c.y * 10, o.c.z * 10)
         cuerpos.append({
             "ruta": ruta(c),
+            "visible": visible(c),
             "centro": cen,
             "tam": s,
             "dir": (o.l.x, o.l.y),

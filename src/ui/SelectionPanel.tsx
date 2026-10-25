@@ -191,7 +191,7 @@ function TrackTable({ c, axis }: { c: Carcass; axis: 'col' | 'row' }) {
               <tr key={i}>
                 <td>{axis === 'col' ? `C${i + 1}` : `F${i + 1}`}</td>
                 <td>
-                  <NumInput value={res.sizes[i]} width={62} invalid={bad} onChange={(v) => upd((d) => setTrackSize(d, axis, i, v))} />
+                  <NumInput value={res.sizes[i]} width={56} invalid={bad} onChange={(v) => upd((d) => setTrackSize(d, axis, i, v))} />
                 </td>
                 <td>
                   <input type="checkbox" checked={t.fixed} onChange={(e) => upd((d) => void ((axis === 'col' ? d.cols : d.rows)[i].fixed = e.target.checked))} />
@@ -201,7 +201,7 @@ function TrackTable({ c, axis }: { c: Carcass; axis: 'col' | 'row' }) {
                     <td>
                       <NumInput
                         value={c.cols[i].depth ?? c.depth}
-                        width={48}
+                        width={44}
                         onChange={(v) =>
                           upd((d) => {
                             d.cols[i].depth = v === d.depth ? undefined : v;
@@ -216,7 +216,7 @@ function TrackTable({ c, axis }: { c: Carcass; axis: 'col' | 'row' }) {
                       </select>
                     </td>
                     <td>
-                      <TextInput value={c.cols[i].zone ?? ''} width={58} onChange={(v) => upd((d) => void (d.cols[i].zone = v.trim() || undefined))} />
+                      <TextInput value={c.cols[i].zone ?? ''} width={46} onChange={(v) => upd((d) => void (d.cols[i].zone = v.trim() || undefined))} />
                     </td>
                   </>
                 )}
@@ -224,7 +224,7 @@ function TrackTable({ c, axis }: { c: Carcass; axis: 'col' | 'row' }) {
                   {hasSep && (
                     <NumInput
                       value={sepT[i]}
-                      width={36}
+                      width={34}
                       min={1}
                       onChange={(v) => upd((d) => void ((axis === 'col' ? d.colSeps : d.rowSeps)[i].thickness = v))}
                     />

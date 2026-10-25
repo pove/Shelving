@@ -7,7 +7,8 @@ import { download, slug } from './common';
 export default function FusionView() {
   const p = useStore((s) => s.project);
   const { boards, env } = useDerived();
-  const src = useMemo(() => fusionScript(p, boards, env), [p, boards, env]);
+  const showDoors = useStore((s) => s.showDoors);
+  const src = useMemo(() => fusionScript(p, boards, env, new Date(), { showDoors }), [p, boards, env, showDoors]);
   const [copied, setCopied] = useState(false);
   const name = slug(p.name);
   return (

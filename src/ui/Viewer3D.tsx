@@ -7,6 +7,10 @@ import { useDerived } from '../derived';
 import type { EnvLeaf } from '../model/environment';
 import type { Board, Box } from '../model/types';
 import { useStore, type ViewName } from '../store';
+import { registerCapture3D } from './exportImage';
+
+/** Puertas y frentes de cajón (lo que se oculta con «Puertas»). */
+export const isFront = (b: Board) => b.kind === 'door' || b.kind === 'drawerFront';
 
 // Conversión de ejes: (x, y=distancia a pared, z=alto) -> three (x, z, y)
 const pos = (b: Box): [number, number, number] => [b.x + b.dx / 2, b.z + b.dz / 2, b.y + b.dy / 2];
@@ -94,12 +98,33 @@ function CameraRig({ center, radius }: { center: THREE.Vector3; radius: number }
   return null;
 }
 
+/** Permite guardar la vista como PNG (a doble resolución) desde fuera del Canvas. */
+function CaptureHook() {
+  const { gl, scene, camera, size } = useThree();
+  useEffect(() => {
+    registerCapture3D(() => {
+      const pr = gl.getPixelRatio();
+      gl.setPixelRatio(Math.max(2, pr));
+      gl.setSize(size.width, size.height, false);
+      gl.render(scene, camera);
+      const url = gl.domElement.toDataURL('image/png');
+      gl.setPixelRatio(pr);
+      gl.setSize(size.width, size.height, false);
+      gl.render(scene, camera);
+      return url;
+    });
+    return () => registerCapture3D(null);
+  }, [gl, scene, camera, size]);
+  return null;
+}
+
 export default function Viewer3D() {
   const { boards, env } = useDerived();
   const project = useStore((s) => s.project);
   const sel = useStore((s) => s.selection);
   const select = useStore((s) => s.select);
   const showEnv = project.environment.show;
+  const showDoors = useStore((s) => s.showDoors);
 
   const { center, radius } = useMemo(() => {
     const bb = new THREE.Box3();
@@ -138,7 +163,7 @@ export default function Viewer3D() {
         shadow-bias={-0.0004}
       />
       <group position={[0, 0, 0]}>
-        {boards.map((b) => (
+        {boards.filter((b) => showDoors || !isFront(b)).map((b) => (
           <BoardMesh
             key={b.id}
             b={b}
@@ -170,6 +195,7 @@ export default function Viewer3D() {
       )}
       <OrbitControls makeDefault enableDamping dampingFactor={0.12} />
       <CameraRig center={center} radius={radius} />
+      <CaptureHook />
     </Canvas>
   );
 }

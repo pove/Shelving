@@ -148,7 +148,7 @@ input.invalid {
   min-height: 0;
 }
 .left {
-  width: 360px;
+  width: 390px;
   flex-shrink: 0;
   overflow-y: auto;
   border-right: 1px solid var(--line);
@@ -207,11 +207,21 @@ input.invalid {
   justify-content: space-between;
   gap: 6px;
 }
+.field {
+  min-width: 0;
+}
 .field > span {
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* la etiqueta se recorta antes de empujar el campo fuera del panel */
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.field > input,
+.field > select {
+  flex: none;
 }
 .grid2 {
   display: grid;
@@ -268,7 +278,14 @@ table.tt th {
   padding: 2px;
 }
 table.tt td {
-  padding: 1px 2px;
+  padding: 1px;
+}
+table.tt select {
+  width: 62px;
+  padding: 3px 2px;
+}
+table.tt button.icon {
+  padding: 1px 5px;
 }
 .nowrap {
   white-space: nowrap;
@@ -334,6 +351,15 @@ table.tt td {
   align-items: center;
   padding: 6px 10px 0;
   overflow-x: auto;
+}
+.focus-save {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 12px;
+  white-space: nowrap;
 }
 .chip {
   border-radius: 999px;
