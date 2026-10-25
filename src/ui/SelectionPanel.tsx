@@ -2,10 +2,10 @@ import type { Draft } from 'immer';
 import { useDerived } from '../derived';
 import { uid } from '../model/defaults';
 import { canMerge, findCarcass, listRegions, rectContains, rectsIntersect, regionAt, regionBounds, regionKey } from '../model/grid';
-import { addSpanningFront, cleanRegion, doorInEachRegion, ensureRegion, removeFronts, findCarcassDraft, insertTrack, mergeCells, removeTrack, setTrackSize, splitCells } from '../model/ops';
-import type { Bridge, Carcass, DoorSpec, EdgeSet, Merge, Module, Project, RegionProps } from '../model/types';
+import { addSpanningFront, cleanRegion, defaultDoor, doorInEachRegion, ensureRegion, removeFronts, findCarcassDraft, insertTrack, mergeCells, removeTrack, setTrackSize, splitCells } from '../model/ops';
+import type { Bridge, Carcass, EdgeSet, Merge, Module, Project, RegionProps } from '../model/types';
 import { useStore } from '../store';
-import { Field, fmt, NumInput, Section, TextInput } from './common';
+import { Field, fmt, MountSelect, NumInput, Section, TextInput } from './common';
 
 export default function SelectionPanel() {
   const sel = useStore((s) => s.selection);
@@ -298,11 +298,11 @@ function CellsPanel({ c, rect }: { c: Carcass; rect: Merge }) {
   );
 }
 
-const DEFAULT_DOOR: DoorSpec = { type: 'door', mount: 'overlay', leaves: 1, hinge: 'left' };
 
 /** Puertas sobre varios huecos: una en cada hueco o una sola para toda la selección. */
 function FrontsEditor({ c, rect, multi }: { c: Carcass; rect: Merge; multi: boolean }) {
   const upd = useCarcassUpdate(c.id);
+  const DEFAULT_DOOR = defaultDoor(useStore((s) => s.project));
   const fronts = (c.fronts ?? []).filter((fr) => rectsIntersect(fr, rect));
   const regs = listRegions(c).filter((r) => rectContains(rect, r));
   const withDoor = regs.filter((r) => c.regions[regionKey(r)]?.door).length;
@@ -338,6 +338,7 @@ function FrontsEditor({ c, rect, multi }: { c: Carcass; rect: Merge; multi: bool
             <option value={1}>1 hoja</option>
             <option value={2}>2 hojas</option>
           </select>
+          <MountSelect value={fr.door.mount} onChange={(m) => upd((d) => void (d.fronts!.find((x) => x.id === fr.id)!.door.mount = m))} />
           {fr.door.leaves === 1 && (
             <select value={fr.door.hinge} onChange={(e) => upd((d) => void (d.fronts!.find((x) => x.id === fr.id)!.door.hinge = e.target.value as 'left' | 'right'))}>
               <option value="left">Bisagras izq.</option>
@@ -435,7 +436,7 @@ function RegionEditor({ c, rect }: { c: Carcass; rect: Merge }) {
               updR((r) => {
                 const v = e.target.value;
                 if (v === 'none') r.door = undefined;
-                else r.door = { mount: 'overlay', leaves: 1, hinge: 'left', ...(r.door ?? {}), type: v as 'door' | 'drawer' };
+                else r.door = { ...defaultDoor(p), ...(r.door ?? {}), type: v as 'door' | 'drawer' };
               }, true)
             }
           >
@@ -447,10 +448,7 @@ function RegionEditor({ c, rect }: { c: Carcass; rect: Merge }) {
         {props.door && (
           <>
             <Field label="Montaje">
-              <select value={props.door.mount} onChange={(e) => updR((r) => void (r.door!.mount = e.target.value as 'overlay' | 'inset'))}>
-                <option value="overlay">Superpuesta</option>
-                <option value="inset">Embutida</option>
-              </select>
+              <MountSelect value={props.door.mount} onChange={(m) => updR((r) => void (r.door!.mount = m))} />
             </Field>
             {props.door.type === 'door' && (
               <>

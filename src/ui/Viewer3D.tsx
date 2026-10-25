@@ -125,6 +125,7 @@ export default function Viewer3D() {
   const select = useStore((s) => s.select);
   const showEnv = project.environment.show;
   const showDoors = useStore((s) => s.showDoors);
+  const envDoors = project.environment.showDoors !== false;
 
   const { center, radius } = useMemo(() => {
     const bb = new THREE.Box3();
@@ -174,7 +175,7 @@ export default function Viewer3D() {
       </group>
       {showEnv && (
         <group>
-          {env.boxes.map((e) => (
+          {env.boxes.filter((e) => envDoors || !e.door).map((e) => (
             <mesh key={e.name} position={pos(e.box)} receiveShadow castShadow={e.kind === 'wall' && !e.name.startsWith('Puerta')}>
               <boxGeometry args={size(e.box)} />
               <meshStandardMaterial
@@ -184,7 +185,7 @@ export default function Viewer3D() {
               {e.kind === 'wall' && <Edges threshold={20} color="#c8c6c0" />}
             </mesh>
           ))}
-          {env.leaf && <Leaf l={env.leaf} />}
+          {env.leaf && envDoors && <Leaf l={env.leaf} />}
         </group>
       )}
       {!showEnv && (

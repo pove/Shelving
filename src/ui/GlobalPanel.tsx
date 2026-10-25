@@ -1,10 +1,10 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { defaultProject, newModule, uid } from '../model/defaults';
-import { roundFixedTracks } from '../model/ops';
+import { roundAll, setAllDoorsMount } from '../model/ops';
 import type { Project } from '../model/types';
 import { migrate, useStore } from '../store';
 import EnvironmentPanel from './EnvironmentPanel';
-import { download, Field, NumInput, Section, slug, TextInput } from './common';
+import { download, Field, MOUNTS, MountSelect, NumInput, Section, slug, TextInput } from './common';
 
 export default function GlobalPanel() {
   const p = useStore((s) => s.project);
@@ -12,6 +12,7 @@ export default function GlobalPanel() {
   const replace = useStore((s) => s.replace);
   const select = useStore((s) => s.select);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [roundMsg, setRoundMsg] = useState<string[] | null>(null);
   const g = p.globals;
   const T = g.thickness;
 
@@ -151,12 +152,38 @@ export default function GlobalPanel() {
         </Field>
         {(g.rounding ?? 0) > 0 && (
           <button
-            title="Redondea también las medidas que fijaste a mano (se puede deshacer)"
-            onClick={() => update((d) => roundFixedTracks(d as Project, d.globals.rounding ?? 0))}
+            title="Redondea también las medidas fijas, los cubos flotantes y las baldas añadidas, y ajusta unos mm el ancho y el alto de los módulos para que todo salga redondo (se puede deshacer)"
+            onClick={() => {
+              let changes: string[] = [];
+              update((d) => void (changes = roundAll(d as Project, d.globals.rounding ?? 0)));
+              setRoundMsg(changes.length ? changes : ['Ya estaba todo redondeado.']);
+            }}
           >
-            Redondear también las medidas fijas
+            Redondear todo
           </button>
         )}
+        {roundMsg && (
+          <div className="round-msg">
+            <ul>
+              {roundMsg.map((m) => (
+                <li key={m}>{m}</li>
+              ))}
+            </ul>
+            <button className="link" onClick={() => setRoundMsg(null)}>
+              Cerrar
+            </button>
+          </div>
+        )}
+      </Section>
+
+      <Section title="Puertas">
+        <Field label="Puertas nuevas" hint="Cómo se montan las puertas y frentes de cajón que añadas">
+          <MountSelect value={g.doorMount ?? 'face'} onChange={(m) => update((d) => void (d.globals.doorMount = m))} />
+        </Field>
+        <button onClick={() => update((d) => void setAllDoorsMount(d as Project, d.globals.doorMount ?? 'face'))}>
+          Pasar todas las puertas a «{MOUNTS.find((m) => m[0] === (g.doorMount ?? 'face'))![1].toLowerCase()}»
+        </button>
+        <p className="hint">«Delante, tamaño del hueco» deja vistos los cantos del mueble. Con puertas embutidas, las baldas de dentro se retranquean el grosor de la puerta.</p>
       </Section>
 
       <Section title="Rodapié">

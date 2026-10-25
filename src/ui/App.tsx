@@ -29,6 +29,7 @@ export default function App() {
   const requestView = useStore((s) => s.requestView);
   const showEnv = useStore((s) => s.project.environment.show);
   const showDoors = useStore((s) => s.showDoors);
+  const envDoors = useStore((s) => s.project.environment.showDoors !== false);
   const setShowDoors = useStore((s) => s.setShowDoors);
   const update = useStore((s) => s.update);
   const { warnings, boards } = useDerived();
@@ -103,6 +104,16 @@ export default function App() {
                       <input type="checkbox" checked={showDoors} onChange={(e) => setShowDoors(e.target.checked)} />
                       Puertas
                     </label>
+                    {showEnv && (
+                      <label className="check" title="Mostrar u ocultar las hojas del hueco de puerta y la balconera (también en el script de Fusion)">
+                        <input
+                          type="checkbox"
+                          checked={envDoors}
+                          onChange={(e) => update((d) => void (d.environment.showDoors = e.target.checked))}
+                        />
+                        Puertas del entorno
+                      </label>
+                    )}
                   </div>
                   <Viewer3D />
                 </div>

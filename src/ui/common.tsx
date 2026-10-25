@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import type { DoorMount } from '../model/types';
 
 export const fmt = (v: number, d = 1) => {
   const r = Math.round(v * 10 ** d) / 10 ** d;
@@ -116,3 +117,22 @@ export const slug = (s: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_|_$/g, '') || 'estanteria';
+
+/** Montajes de puerta, en el orden en que se ofrecen. */
+export const MOUNTS: [DoorMount, string, string][] = [
+  ['face', 'Delante, tamaño del hueco', 'Delante del mueble y del tamaño interior del hueco: no tapa los cantos'],
+  ['inset', 'Embutida', 'Dentro del hueco, a haces con el frente; las baldas de dentro se retranquean'],
+  ['overlay', 'Superpuesta', 'Delante, tapando la mitad de baldas y divisores y los laterales (bisagras de codo)'],
+];
+
+export function MountSelect({ value, onChange }: { value: DoorMount; onChange: (m: DoorMount) => void }) {
+  return (
+    <select value={value} title={MOUNTS.find((m) => m[0] === value)?.[2]} onChange={(e) => onChange(e.target.value as DoorMount)}>
+      {MOUNTS.map(([k, label, hint]) => (
+        <option key={k} value={k} title={hint}>
+          {label}
+        </option>
+      ))}
+    </select>
+  );
+}

@@ -13,6 +13,14 @@ export default function EnvironmentPanel() {
         <label className="check">
           <input type="checkbox" checked={env.show} onChange={(e) => update((d) => void (d.environment.show = e.target.checked))} /> Mostrar entorno
         </label>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={env.showDoors !== false}
+            onChange={(e) => update((d) => void (d.environment.showDoors = e.target.checked))}
+          />{' '}
+          Mostrar puertas del entorno (hueco de puerta y balconera)
+        </label>
         <div className="grid2">
           <Field label="Pared desde X">
             <NumInput value={env.wallX0} onChange={(v) => update((d) => void (d.environment.wallX0 = v))} />

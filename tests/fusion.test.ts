@@ -91,4 +91,18 @@ describe('script de Fusion', () => {
     const si = runScript(src, 1, { YA_HAY_PIEZAS: '1', NUEVO_DOCUMENTO: '0', RESPONDER_SI: '1' });
     expect(si.mensajes.some((m) => m.startsWith('Mueble generado (68 tableros)'))).toBe(true);
   });
+
+  it('las puertas del entorno van en su componente y se pueden ocultar', () => {
+    const vis = runScript(src, 1).cuerpos.filter((c) => c.ruta.includes('/Puertas del entorno/'));
+    expect(vis.map((c) => c.ruta.split('/').pop()).sort()).toEqual(['Balconera (abierta 91 grados)', 'Puerta 1', 'Puerta 2']);
+    expect(vis.every((c) => c.visible)).toBe(true);
+    const p2 = defaultProject();
+    p2.environment.showDoors = false;
+    const d2 = derive(p2);
+    const out = runScript(fusionScript(p2, d2.boards, d2.env), 1);
+    const ocultas = out.cuerpos.filter((c) => c.ruta.startsWith('Entorno') && !c.visible).map((c) => c.ruta.split('/').pop()).sort();
+    expect(ocultas).toEqual(['Balconera (abierta 91 grados)', 'Puerta 1', 'Puerta 2']);
+    // el resto del entorno y el mueble siguen visibles
+    expect(out.cuerpos.filter((c) => !c.visible).length).toBe(3);
+  });
 });

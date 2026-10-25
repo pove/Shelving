@@ -348,6 +348,16 @@ table.tt button.icon {
   font-size: 11px;
   border-top: 1px solid var(--line);
 }
+.round-msg {
+  font-size: 12px;
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.round-msg ul {
+  margin: 0 0 4px;
+  padding-left: 16px;
+}
 /* barra de acciones del alzado */
 .focus-bar {
   display: flex;

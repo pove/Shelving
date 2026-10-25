@@ -116,7 +116,7 @@ export function addSpanningFront(c: Carcass, rect: Merge, door: DoorSpec, id: st
     }
   }
   c.fronts = (c.fronts ?? []).filter((fr) => !rectsIntersect(fr, rect));
-  c.fronts.push({ id, ...rect, door: { ...door, type: 'door', mount: 'overlay' } });
+  c.fronts.push({ id, ...rect, door: { ...door, type: 'door' } });
 }
 
 export function removeFronts(c: Carcass, rect: Merge) {
@@ -155,25 +155,102 @@ export function setRegionDoor(c: Carcass, rect: Merge, door: DoorSpec | undefine
   if (door) c.fronts = (c.fronts ?? []).filter((fr) => !rectsIntersect(fr, rect));
 }
 
+/** Lo que sobra de las pistas «repartir» de un casco para ser múltiplo de step (0 si no hay). */
+function autoResidue(sizes: number[], tracks: { fixed: boolean }[], step: number) {
+  const autos = tracks.map((t, i) => (t.fixed ? 0 : sizes[i]));
+  if (!tracks.some((t) => !t.fixed)) return 0;
+  const sum = autos.reduce((a, b) => a + b, 0);
+  const r = sum - Math.floor(sum / step + 1e-6) * step;
+  return r < 0.01 || step - r < 0.01 ? 0 : r;
+}
+
+const mm = (v: number) => (Math.round(v * 10) / 10).toLocaleString('es-ES');
+
 /**
- * Redondea las medidas fijas de todas las filas y columnas a múltiplos de step (mm).
- * Los puentes que estaban alineados con una balda del módulo izquierdo (y con su techo)
- * se mueven con ella, para que sigan alineados.
+ * Redondea todo a múltiplos de step (mm):
+ * - las medidas fijas de filas y columnas, los cubos flotantes y las baldas/divisores añadidos;
+ * - el ancho y el alto de cada módulo se reducen lo justo (menos de step) para que las
+ *   pistas «repartir» también salgan redondas, y los módulos a la derecha de un puente se
+ *   mueven a la izquierda lo justo para que el puente también reparta redondo;
+ * - los puentes alineados con una balda del módulo izquierdo (y con su techo) siguen alineados.
+ * Devuelve la lista de cambios de tamaño/posición, para enseñarla.
  */
-export function roundFixedTracks(p: Project, step: number) {
-  if (step <= 0) return;
+export function roundAll(p: Project, step: number): string[] {
+  if (step <= 0) return [];
+  const R = (v: number) => Math.round(v / step) * step;
+  const changes: string[] = [];
   const links = p.bridges.map((b) => {
     const m = p.modules.find((x) => x.id === b.leftId);
     if (!m) return null;
     const L = layoutCarcass(p, m);
     const sep = L.rowSeps.findIndex((s) => Math.abs(s.a - b.z) < 0.5);
-    return { b, m, sep, top: Math.abs(b.z + b.height - m.height) < 0.5 };
+    return { b, m, sep, top: Math.abs(b.z + b.height - m.height) < 0.5, z0: b.z };
   });
-  for (const c of [...p.modules, ...p.bridges])
-    for (const t of [...c.cols, ...c.rows]) if (t.fixed) t.size = Math.max(step, Math.round(t.size / step) * step);
+
+  for (const c of [...p.modules, ...p.bridges]) {
+    for (const t of [...c.cols, ...c.rows]) if (t.fixed) t.size = Math.max(step, R(t.size));
+    for (const r of Object.values(c.regions)) {
+      for (const i of r.inserts) i.offset = Math.max(0, R(i.offset));
+      if (r.floating) {
+        r.floating.width = Math.max(step, R(r.floating.width));
+        r.floating.height = Math.max(step, R(r.floating.height));
+      }
+    }
+  }
+
+  // alto: cada módulo baja lo que sobre en sus filas «repartir»
+  for (const m of p.modules) {
+    const L = layoutCarcass(p, m);
+    const r = autoResidue(L.rowH.sizes, m.rows, step);
+    if (r > 0) {
+      changes.push(`${m.name}: alto ${mm(m.height)} → ${mm(m.height - r)}`);
+      m.height -= r;
+    }
+  }
+
+  // ancho, de izquierda a derecha
+  const ordered = [...p.modules].sort((a, b) => a.x - b.x);
+  const x0 = new Map(ordered.map((m) => [m.id, m.x]));
+  for (const m of ordered) {
+    const L = layoutCarcass(p, m);
+    const r = autoResidue(L.colW.sizes, m.cols, step);
+    if (r > 0) {
+      changes.push(`${m.name}: ancho ${mm(m.width)} → ${mm(m.width - r)}`);
+      m.width -= r;
+    }
+    for (const b of p.bridges.filter((b) => b.leftId === m.id)) {
+      const right = p.modules.find((x) => x.id === b.rightId);
+      if (!right) continue;
+      const Lb = layoutCarcass(p, b);
+      const rb = autoResidue(Lb.colW.sizes, b.cols, step);
+      if (rb > 0) for (const o of ordered) if (o.x >= right.x - 0.01) o.x -= rb;
+    }
+  }
+  for (const m of ordered) {
+    const was = x0.get(m.id)!;
+    if (Math.abs(m.x - was) > 0.01) changes.push(`${m.name}: posición X ${mm(was)} → ${mm(m.x)}`);
+  }
+
   for (const k of links) {
     if (!k || k.sep < 0) continue;
     k.b.z = layoutCarcass(p, k.m).rowSeps[k.sep].a;
     if (k.top) k.b.height = k.m.height - k.b.z;
+    if (Math.abs(k.b.z - k.z0) > 0.01) changes.push(`${k.b.name}: base a ${mm(k.z0)} → ${mm(k.b.z)} (sigue alineado con su balda)`);
   }
+  return changes;
+}
+
+/** Puerta o cajón nuevo con el montaje elegido en los ajustes (por defecto, delante y del tamaño del hueco). */
+export function defaultDoor(p: Project, type: DoorSpec['type'] = 'door'): DoorSpec {
+  return { type, mount: p.globals.doorMount ?? 'face', leaves: 1, hinge: 'left' };
+}
+
+/** Cambia el montaje de todas las puertas y cajones del proyecto. Devuelve cuántos cambió. */
+export function setAllDoorsMount(p: Project, mount: DoorSpec['mount']): number {
+  let n = 0;
+  for (const c of [...p.modules, ...p.bridges]) {
+    for (const r of Object.values(c.regions)) if (r.door && r.door.mount !== mount) (r.door.mount = mount), n++;
+    for (const fr of c.fronts ?? []) if (fr.door.mount !== mount) (fr.door.mount = mount), n++;
+  }
+  return n;
 }

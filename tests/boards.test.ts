@@ -263,26 +263,97 @@ describe('redondeo de medidas', () => {
     expect(r5.mismatch).toBe(0);
   });
 
-  it('el proyecto inicial redondeado sigue sin solapes y con los totales exactos', async () => {
-    const { roundFixedTracks } = await import('../src/model/ops');
+  for (const step of [5, 10]) {
+    it(`«Redondear todo» a ${step} mm: todas las medidas interiores redondas, sin solapes y alineado`, async () => {
+      const { roundAll } = await import('../src/model/ops');
+      const p = defaultProject();
+      p.globals.rounding = step;
+      const changes = roundAll(p, step);
+      expect(changes.length).toBeGreaterThan(0);
+      const { boards, layouts } = computeBoards(p);
+      expect(findOverlaps(boards)).toEqual([]);
+      for (const L of layouts.values()) {
+        expect(L.colW.mismatch).toBe(0);
+        expect(L.rowH.mismatch).toBe(0);
+        for (const v of [...L.colW.sizes, ...L.rowH.sizes]) expect(Math.abs(v / step - Math.round(v / step))).toBeLessThan(1e-6);
+      }
+      // nunca crece: los módulos caben en el mismo sitio
+      const izq = p.modules[0], der = p.modules[1];
+      expect(izq.x).toBe(0);
+      expect(izq.width).toBeLessThanOrEqual(1700);
+      expect(der.x + der.width).toBeLessThanOrEqual(3915 + 1780);
+      expect(izq.height).toBeLessThanOrEqual(2490);
+      // el puente sigue alineado con la balda franja y con el techo de los módulos
+      const franja = boards.find((b) => b.groupId === 'izq' && b.name === 'Balda franja')!;
+      const base = boards.find((b) => b.groupId === 'puente' && b.name === 'Base')!;
+      expect(base.box.z).toBeCloseTo(franja.box.z, 6);
+      expect(layouts.get('puente')!.z1).toBeCloseTo(izq.height, 6);
+    });
+  }
+});
+
+describe('puertas embutidas', () => {
+  it('puerta grande embutida: dentro del hueco y con las piezas interiores retranqueadas', async () => {
+    const { addSpanningFront } = await import('../src/model/ops');
     const p = defaultProject();
-    p.globals.rounding = 10;
-    roundFixedTracks(p, 10);
+    const inset = { type: 'door' as const, mount: 'inset' as const, leaves: 2 as const, hinge: 'left' as const };
+    addSpanningFront(p.modules[1], { c0: 0, r0: 0, c1: 2, r1: 1 }, inset, 'f');
     const { boards, layouts } = computeBoards(p);
     expect(findOverlaps(boards)).toEqual([]);
-    for (const L of layouts.values()) {
-      expect(L.colW.mismatch).toBe(0);
-      expect(L.rowH.mismatch).toBe(0);
-    }
-    const der = layouts.get('der')!;
-    expect(der.colW.sizes).toEqual([330, 330, 330, 330, 328]);
-    const izq = layouts.get('izq')!;
-    expect(izq.colW.sizes.slice(0, 3)).toEqual([710, 310, 310]);
-    // el puente sigue alineado con la balda franja y con el techo de los módulos
-    const franja = boards.find((b) => b.groupId === 'izq' && b.name === 'Balda franja')!;
-    const base = boards.find((b) => b.groupId === 'puente' && b.name === 'Base')!;
-    expect(base.box.z).toBeCloseTo(franja.box.z, 6);
-    expect(layouts.get('puente')!.z1).toBeCloseTo(2490, 6);
-    expect(layouts.get('puente')!.rowH.sizes[0]).toBeCloseTo(300, 6);
+    const L = layouts.get('der')!;
+    const doors = boards.filter((b) => b.groupId === 'der' && b.kind === 'door');
+    expect(doors.length).toBe(2);
+    // dentro del hueco: de la cara del lateral a la del divisor C3|C4, menos la holgura (3)
+    expect(doors[0].box.x).toBeCloseTo(L.cols[0].a + 3, 6);
+    expect(doors[1].box.x + doors[1].box.dx).toBeCloseTo(L.cols[2].b - 3, 6);
+    expect(doors[0].box.z).toBeCloseTo(L.rows[0].a + 3, 6);
+    // a haces con el frente del mueble
+    expect(doors[0].box.y + doors[0].box.dy).toBeCloseTo(330, 6);
+    // los divisores y la balda de dentro, retranqueados 19 mm; los de fuera, no
+    const inside = boards.filter((b) => b.groupId === 'der' && (b.kind === 'divider' || b.kind === 'shelf') && b.box.x >= L.cols[0].a - 0.1 && b.box.x + b.box.dx <= L.cols[2].b + 0.1 && b.box.z >= L.rows[0].a - 0.1 && b.box.z + b.box.dz <= L.rows[1].b + 0.1);
+    expect(inside.length).toBeGreaterThan(0);
+    for (const b of inside) expect(b.box.y + b.box.dy).toBeCloseTo(330 - 19, 6);
+    const outside = boards.find((b) => b.groupId === 'der' && b.name === 'Divisor F2-4')!;
+    expect(outside.box.y + outside.box.dy).toBeCloseTo(330, 6);
+  });
+
+  it('todas las puertas del proyecto inicial pasadas a embutidas: sin solapes', async () => {
+    const { setAllDoorsMount } = await import('../src/model/ops');
+    const p = defaultProject();
+    expect(setAllDoorsMount(p, 'inset')).toBe(2);
+    const { boards } = computeBoards(p);
+    expect(findOverlaps(boards)).toEqual([]);
+    const door = boards.find((b) => b.name === 'Puerta armario bajo')!;
+    // el armario tiene 281 de casco: la puerta embutida queda a haces con su frente
+    expect(door.box.y + door.box.dy).toBeCloseTo(281, 6);
+    expect(door.box.x).toBeCloseTo(28 + 3, 6);
+  });
+
+  it('puerta delante y del tamaño del hueco (por defecto): no tapa los cantos ni retranquea nada', async () => {
+    const { addSpanningFront, setRegionDoor, defaultDoor, setAllDoorsMount } = await import('../src/model/ops');
+    const p = defaultProject();
+    expect(defaultDoor(p).mount).toBe('face');
+    const m = p.modules[1];
+    addSpanningFront(m, { c0: 0, r0: 0, c1: 2, r1: 1 }, { ...defaultDoor(p), leaves: 2 }, 'f');
+    setRegionDoor(m, { c0: 3, r0: 0, c1: 3, r1: 0 }, defaultDoor(p, 'drawer'));
+    setRegionDoor(m, { c0: 4, r0: 0, c1: 4, r1: 0 }, defaultDoor(p));
+    const { boards, layouts } = computeBoards(p);
+    expect(findOverlaps(boards)).toEqual([]);
+    const L = layouts.get('der')!;
+    const big = boards.filter((b) => b.src.type === 'front' && b.kind === 'door');
+    expect(big[0].box.x).toBeCloseTo(L.cols[0].a, 6);
+    expect(big[1].box.x + big[1].box.dx).toBeCloseTo(L.cols[2].b, 6);
+    expect(big[0].box.z).toBeCloseTo(L.rows[0].a, 6);
+    expect(big[0].box.z + big[0].box.dz).toBeCloseTo(L.rows[1].b, 6);
+    expect(big[0].box.y).toBeCloseTo(330, 6); // delante del frente
+    const single = boards.find((b) => b.id === 'der:door:4:0:4:0:0')!;
+    expect(single.box.dx).toBeCloseTo(L.colW.sizes[4], 6);
+    expect(single.box.dz).toBeCloseTo(L.rowH.sizes[0], 6);
+    // nada interior retranqueado
+    for (const b of boards.filter((b) => b.groupId === 'der' && (b.kind === 'divider' || b.kind === 'shelf'))) expect(b.box.y + b.box.dy).toBeCloseTo(330, 6);
+    // y todo el proyecto inicial con este montaje, sin solapes
+    const q = defaultProject();
+    setAllDoorsMount(q, 'face');
+    expect(findOverlaps(computeBoards(q).boards)).toEqual([]);
   });
 });
