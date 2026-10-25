@@ -50,6 +50,7 @@ export default function App() {
   }, [undo, redo]);
 
   const errors = warnings.filter((w) => w.level === 'error').length;
+  const issues = warnings.filter((w) => w.level !== 'info').length;
 
   return (
     <div className="app">
@@ -59,7 +60,7 @@ export default function App() {
           {TABS.map(([k, label]) => (
             <button key={k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>
               {label}
-              {k === 'warnings' && warnings.length > 0 && <span className={'badge' + (errors ? ' err' : '')}>{warnings.length}</span>}
+              {k === 'warnings' && issues > 0 && <span className={'badge' + (errors ? ' err' : '')}>{issues}</span>}
             </button>
           ))}
         </nav>

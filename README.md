@@ -1,1 +1,47 @@
-# Shelving
+# Estanterías a medida
+
+Webapp (sin backend) para diseñar estanterías modulares de melamina y generar a partir del
+diseño el **despiece**, la **optimización de cortes** y un **script de Autodesk Fusion**
+equivalente a `Estanteria.py`.
+
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm test         # Vitest
+npm run build    # dist/ estático
+```
+
+## Cómo está hecho
+
+Todo parte de una función pura: `computeBoards(proyecto)` (`src/model/boards.ts`) convierte el
+proyecto JSON en una lista de tableros (posición, tamaño, espesor, cantos, notas, rebaje).
+La vista 3D, el alzado, el despiece, los cortes y el script de Fusion se alimentan de esa lista.
+
+| Archivo | Qué hace |
+| --- | --- |
+| `src/model/types.ts` | Modelo de datos (proyecto, módulos, puentes, entorno, tableros) |
+| `src/model/grid.ts` | Medidas interiores fijas/repartidas, posiciones, huecos y zonas de fondo |
+| `src/model/boards.ts` | Proyecto → tableros |
+| `src/model/ops.ts` | Edición: insertar/quitar filas y columnas, fusionar/separar |
+| `src/model/environment.ts` | Pared, suelo, rodapié, puertas y ángulo máximo de la balconera |
+| `src/model/warnings.ts` | Avisos: descuadres, huecos pequeños, flecha, planchas, solapes |
+| `src/model/cutlist.ts` | Despiece agrupado y CSV (`;`, coma decimal, UTF-8 con BOM) |
+| `src/model/nesting.ts` | Empaquetado guillotina con sierra, refilado y veta |
+| `src/model/fusion.ts` | Generador del script de Fusion |
+| `src/model/defaults.ts` | Proyecto inicial (recrea `Estanteria.py` v6) |
+
+### Ejes y convenciones
+
+- App: X a lo largo de la pared, Y = distancia a la pared, Z = alto. Medidas en mm.
+- Script de Fusion: igual que `Estanteria.py` (Y = 0 frente, Y = FONDO pared, Z arriba).
+- Filas de abajo arriba (F1 = abajo), columnas de izquierda a derecha.
+- En los cruces, las baldas pasan y los divisores se cortan; donde cambia el fondo
+  (p. ej. el armario de 281 + puerta), el separador va de suelo a techo y parte base y techo.
+
+### Tests
+
+- `tests/boards.test.ts`: el proyecto inicial da exactamente las mismas 68 cajas y rebajes que
+  `Estanteria.py` (port en `tests/reference/estanteria.ts`), sin solapes y con totales que cuadran.
+- `tests/fusion.test.ts`: ejecuta el `.py` generado con Python contra un stub de la API de
+  Fusion (`tests/fusion_stub/`) en modo paramétrico y directo, y compara la geometría.
+- `tests/cutlist.test.ts`, `tests/nesting.test.ts`: despiece/CSV y cortes sin solapes.
