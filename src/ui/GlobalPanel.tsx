@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { defaultProject, newModule, uid } from '../model/defaults';
 import type { Project } from '../model/types';
 import { migrate, useStore } from '../store';
+import EnvironmentPanel from './EnvironmentPanel';
 import { download, Field, NumInput, Section, slug, TextInput } from './common';
 
 export default function GlobalPanel() {
@@ -165,6 +166,8 @@ export default function GlobalPanel() {
           <p className="warn-text">El rebaje es más pequeño que el rodapié.</p>
         )}
       </Section>
+
+      <EnvironmentPanel />
 
       <Section title="Materiales" defaultOpen={false}>
         <div className="grid2">
