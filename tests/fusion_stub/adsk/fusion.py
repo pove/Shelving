@@ -78,8 +78,10 @@ class _Bodies:
 class _Occs:
     def __init__(self, comp):
         self.comp = comp
+        self.count = 0
 
     def addNewComponent(self, m):
+        self.count += 1
         c = Component(self.comp.design, self.comp)
         occ = type("Occ", (), {"component": c, "isLightBulbOn": True})()
         c.occ = occ

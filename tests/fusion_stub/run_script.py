@@ -2,6 +2,7 @@
 import importlib.util, json, os, sys, tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from adsk import REGISTRO
+from adsk.core import Application
 
 home = tempfile.mkdtemp()
 os.environ["HOME"] = home
@@ -9,6 +10,13 @@ os.environ["USERPROFILE"] = home
 spec = importlib.util.spec_from_file_location("generado", sys.argv[1])
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
+if os.environ.get("YA_HAY_PIEZAS"):
+    # simula un diseño abierto que ya contiene un mueble de una ejecución anterior
+    from adsk.core import Application
+    Application.get().activeProduct.rootComponent.occurrences.addNewComponent(None).component.name = "Izquierdo - Encimera"
+if os.environ.get("NUEVO_DOCUMENTO") == "0":
+    mod.NUEVO_DOCUMENTO = False
+REGISTRO["responder_si"] = os.environ.get("RESPONDER_SI") == "1"
 mod.run(None)
 
 
@@ -29,7 +37,10 @@ def ruta(c):
 
 
 cuerpos = []
+diseno = Application.get().activeProduct
 for c in REGISTRO["componentes"]:
+    if c.design is not diseno:
+        continue
     for b in c.bRepBodies.items:
         o = b.obb
         s = [v * 10 for v in o.size]
@@ -44,4 +55,5 @@ for c in REGISTRO["componentes"]:
         })
 csv = [f for f in os.listdir(home)]
 print(json.dumps({"cuerpos": cuerpos, "mensajes": REGISTRO["mensajes"], "csv": csv,
+                  "preguntas": REGISTRO.get("preguntas", []), "documentos_nuevos": REGISTRO.get("documentos_nuevos", 0),
                   "csv_texto": open(os.path.join(home, csv[0]), encoding="utf-8-sig").read() if csv else ""}))

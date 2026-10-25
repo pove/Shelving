@@ -13,14 +13,16 @@ interface Out {
   mensajes: string[];
   csv: string[];
   csv_texto: string;
+  preguntas: string[];
+  documentos_nuevos: number;
 }
 
-function runScript(src: string, designType: 0 | 1): Out {
+function runScript(src: string, designType: 0 | 1, extraEnv: Record<string, string> = {}): Out {
   const dir = mkdtempSync(join(tmpdir(), 'fusion-'));
   const f = join(dir, 'estanteria_generada.py');
   writeFileSync(f, src);
   const out = execFileSync('python3', [join(__dirname, 'fusion_stub', 'run_script.py'), f], {
-    env: { ...process.env, DESIGN_TYPE: String(designType) },
+    env: { ...process.env, DESIGN_TYPE: String(designType), ...extraEnv },
   });
   return JSON.parse(out.toString());
 }
@@ -72,5 +74,21 @@ describe('script de Fusion', () => {
     const ocultos = mueble.filter((c) => !c.visible).map((c) => c.ruta);
     expect(ocultos.length).toBe(2);
     expect(ocultos.every((r) => r.includes('Puerta'))).toBe(true);
+  });
+
+  it('por defecto construye en un diseño nuevo aunque el abierto tenga un mueble anterior', () => {
+    const out = runScript(src, 1, { YA_HAY_PIEZAS: '1' });
+    expect(out.documentos_nuevos).toBe(1);
+    expect(out.preguntas).toEqual([]);
+    const encimeras = out.cuerpos.filter((c) => c.ruta.endsWith('Izquierdo - Encimera'));
+    expect(encimeras.length).toBe(1);
+  });
+
+  it('con NUEVO_DOCUMENTO = False en un diseño con piezas pregunta antes, y si dices que no, no construye', () => {
+    const no = runScript(src, 1, { YA_HAY_PIEZAS: '1', NUEVO_DOCUMENTO: '0' });
+    expect(no.preguntas.length).toBe(1);
+    expect(no.mensajes.some((m) => m.startsWith('Mueble generado'))).toBe(false);
+    const si = runScript(src, 1, { YA_HAY_PIEZAS: '1', NUEVO_DOCUMENTO: '0', RESPONDER_SI: '1' });
+    expect(si.mensajes.some((m) => m.startsWith('Mueble generado (68 tableros)'))).toBe(true);
   });
 });

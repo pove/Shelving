@@ -59,7 +59,8 @@ export function fusionScript(p: Project, boards: Board[], env: EnvResult, date =
 import adsk.core, adsk.fusion, traceback, os, unicodedata
 
 # ================= OPCIONES =================
-NUEVO_DOCUMENTO = False   # True = crea un diseño nuevo antes de construir (evita duplicar el mueble)
+NUEVO_DOCUMENTO = True    # True = construye en un diseño nuevo. Con False usa el diseño abierto
+                          # (si ya tiene piezas, pregunta antes: quedarían piezas viejas mezcladas)
 ENTORNO         = ${p.environment.show ? 'True' : 'False'}    # pared, suelo, rodapié y puertas (no entra en el despiece)
 PUERTAS_VISIBLES = ${opts.showDoors === false ? 'False' : 'True'}   # las puertas de cada módulo van en su componente «Puertas»: enciéndelo/apágalo con la bombilla
 GUARDAR_CSV     = True
@@ -231,6 +232,16 @@ def run(context):
             ui.messageBox("Abre un diseño de Fusion antes de ejecutar el script.")
             return
         root = _design.rootComponent
+        if not NUEVO_DOCUMENTO and (root.occurrences.count > 0 or root.bRepBodies.count > 0):
+            r = ui.messageBox(
+                "Este diseño ya tiene piezas. Si sigues, el mueble nuevo se mezclará con lo que haya "
+                "(Fusion numerará los nombres repetidos, p. ej. «Encimera 1»).\\n\\n"
+                "¿Construir aquí de todas formas? (No = cancelar; pon NUEVO_DOCUMENTO = True "
+                "para construir siempre en un diseño nuevo)",
+                "Diseño con piezas",
+                adsk.core.MessageBoxButtonTypes.YesNoButtonType)
+            if r != adsk.core.DialogResults.DialogYes:
+                return
 
         comps = [grupo(root, g) for g in GRUPOS]
         puertas = {}  # componente «Puertas» de cada grupo, creado al encontrar la primera

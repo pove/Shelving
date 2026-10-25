@@ -16,8 +16,8 @@ export default function FusionView() {
       <h2>Script de Autodesk Fusion</h2>
       <p className="muted">
         Construye el diseño completo con un componente por tablero (agrupados por módulo y puente), el entorno aparte, aplica las
-        apariencias buscándolas por nombre en las bibliotecas de Fusion y guarda el CSV de despiece en el Escritorio. Ejecútalo en un
-        diseño nuevo (o pon <code>NUEVO_DOCUMENTO = True</code>).
+        apariencias buscándolas por nombre en las bibliotecas de Fusion y guarda el CSV de despiece en el Escritorio. Por defecto crea un
+        diseño nuevo cada vez (<code>NUEVO_DOCUMENTO = True</code>), así no se mezcla con piezas de ejecuciones anteriores.
       </p>
       <div className="report-tools">
         <button className="primary" onClick={() => download(`${name}.py`, src, 'text/x-python')}>
@@ -39,7 +39,7 @@ export default function FusionView() {
       <ol className="muted">
         <li>En Fusion: Utilidades → Complementos → Scripts y complementos → «+» → Crear script (Python), con el nombre que quieras.</li>
         <li>Sustituye el contenido del .py creado por este archivo (o copia el archivo descargado a esa carpeta).</li>
-        <li>Abre un diseño nuevo (paramétrico o híbrido) y ejecuta el script. Z queda hacia arriba.</li>
+        <li>Ejecuta el script: crea un diseño nuevo y construye el mueble con Z hacia arriba.</li>
       </ol>
       <pre className="code">{src}</pre>
     </div>
