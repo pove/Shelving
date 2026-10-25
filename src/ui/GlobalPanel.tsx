@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
 import { defaultProject, newModule, uid } from '../model/defaults';
-import { roundAll } from '../model/ops';
+import { roundAll, setAllDoorsMount } from '../model/ops';
 import type { Project } from '../model/types';
 import { migrate, useStore } from '../store';
 import EnvironmentPanel from './EnvironmentPanel';
-import { download, Field, NumInput, Section, slug, TextInput } from './common';
+import { download, Field, MOUNTS, MountSelect, NumInput, Section, slug, TextInput } from './common';
 
 export default function GlobalPanel() {
   const p = useStore((s) => s.project);
@@ -174,6 +174,16 @@ export default function GlobalPanel() {
             </button>
           </div>
         )}
+      </Section>
+
+      <Section title="Puertas">
+        <Field label="Puertas nuevas" hint="Cómo se montan las puertas y frentes de cajón que añadas">
+          <MountSelect value={g.doorMount ?? 'face'} onChange={(m) => update((d) => void (d.globals.doorMount = m))} />
+        </Field>
+        <button onClick={() => update((d) => void setAllDoorsMount(d as Project, d.globals.doorMount ?? 'face'))}>
+          Pasar todas las puertas a «{MOUNTS.find((m) => m[0] === (g.doorMount ?? 'face'))![1].toLowerCase()}»
+        </button>
+        <p className="hint">«Delante, tamaño del hueco» deja vistos los cantos del mueble. Con puertas embutidas, las baldas de dentro se retranquean el grosor de la puerta.</p>
       </Section>
 
       <Section title="Rodapié">

@@ -56,6 +56,16 @@ absorbe la diferencia también salga redonda; los módulos a la derecha de un pu
 justo para que el puente también reparta redondo, y el puente sigue alineado con su balda y con
 el techo. Enseña la lista de cambios y se puede deshacer.
 
+## Montaje de puertas
+
+Cada puerta o cajón tiene su montaje (y en «Puertas» se elige el de las nuevas y se pueden
+pasar todas de golpe):
+- **Delante, tamaño del hueco** (por defecto): delante del mueble y del tamaño interior del
+  hueco, dejando vistos los cantos de laterales y baldas.
+- **Embutida**: dentro del hueco, a haces con el frente; las baldas y divisores de dentro se
+  retranquean el grosor de la puerta.
+- **Superpuesta**: delante, tapando la mitad de baldas/divisores y los laterales.
+
 ## Uso en el móvil
 
 - «Ver: Todo / Izquierdo / Puente / Derecho» amplía el alzado a un solo módulo.

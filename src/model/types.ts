@@ -41,9 +41,17 @@ export interface Insert {
   thickness?: number;
 }
 
+/**
+ * Montaje de puertas y frentes de cajón:
+ * - 'face': delante del mueble, del tamaño interior del hueco (no tapa los cantos);
+ * - 'inset': embutida, dentro del hueco y a haces con el frente;
+ * - 'overlay': superpuesta, delante y tapando la mitad de baldas/divisores y los laterales.
+ */
+export type DoorMount = 'face' | 'inset' | 'overlay';
+
 export interface DoorSpec {
   type: 'door' | 'drawer';
-  mount: 'overlay' | 'inset';
+  mount: DoorMount;
   leaves: 1 | 2;
   hinge: 'left' | 'right';
 }
@@ -120,6 +128,8 @@ export interface Globals {
   ceilingGap: number;
   /** Redondeo (mm) de las medidas que se reparten: 0 = sin redondear, 5 = medio cm, 10 = cm. */
   rounding?: number;
+  /** Montaje de las puertas nuevas (por defecto, delante y del tamaño del hueco). */
+  doorMount?: DoorMount;
   doorGap: number;
   plinth: {
     notch: boolean;

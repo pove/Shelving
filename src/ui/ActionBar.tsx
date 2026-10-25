@@ -4,12 +4,11 @@ import type { Draft } from 'immer';
 import { useDerived } from '../derived';
 import { uid } from '../model/defaults';
 import { canMerge, findCarcass, listRegions, rectContains, rectsIntersect, regionKey } from '../model/grid';
-import { addSpanningFront, doorInEachRegion, doorsIn, editDoorsIn, findCarcassDraft, mergeCells, removeFronts, setRegionDoor, splitCells } from '../model/ops';
-import type { Carcass, DoorSpec, Merge, Project } from '../model/types';
+import { addSpanningFront, defaultDoor, doorInEachRegion, doorsIn, editDoorsIn, findCarcassDraft, mergeCells, removeFronts, setRegionDoor, splitCells } from '../model/ops';
+import type { Carcass, Merge, Project } from '../model/types';
 import { useStore } from '../store';
+import { MountSelect } from './common';
 
-const DOOR: DoorSpec = { type: 'door', mount: 'overlay', leaves: 1, hinge: 'left' };
-const DRAWER: DoorSpec = { ...DOOR, type: 'drawer' };
 
 export default function ActionBar() {
   const p = useStore((s) => s.project);
@@ -19,6 +18,8 @@ export default function ActionBar() {
   const multi = useStore((s) => s.multiSelect);
   const setMulti = useStore((s) => s.setMultiSelect);
   const { boards, layouts } = useDerived();
+  const DOOR = defaultDoor(p, 'door');
+  const DRAWER = defaultDoor(p, 'drawer');
 
   const c = sel.carcassId ? findCarcass(p, sel.carcassId) : undefined;
   const upd = (fn: (c: Draft<Carcass>) => void) =>
@@ -119,6 +120,7 @@ export default function ActionBar() {
         )}
         {doors.count > 0 && first && (
           <>
+            <MountSelect value={first.mount} onChange={(m) => upd((d) => editDoorsIn(d, rect!, (x) => void (x.mount = m)))} />
             {first.type === 'door' && (
               <>
                 <button

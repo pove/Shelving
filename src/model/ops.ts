@@ -116,7 +116,7 @@ export function addSpanningFront(c: Carcass, rect: Merge, door: DoorSpec, id: st
     }
   }
   c.fronts = (c.fronts ?? []).filter((fr) => !rectsIntersect(fr, rect));
-  c.fronts.push({ id, ...rect, door: { ...door, type: 'door', mount: 'overlay' } });
+  c.fronts.push({ id, ...rect, door: { ...door, type: 'door' } });
 }
 
 export function removeFronts(c: Carcass, rect: Merge) {
@@ -238,4 +238,19 @@ export function roundAll(p: Project, step: number): string[] {
     if (Math.abs(k.b.z - k.z0) > 0.01) changes.push(`${k.b.name}: base a ${mm(k.z0)} → ${mm(k.b.z)} (sigue alineado con su balda)`);
   }
   return changes;
+}
+
+/** Puerta o cajón nuevo con el montaje elegido en los ajustes (por defecto, delante y del tamaño del hueco). */
+export function defaultDoor(p: Project, type: DoorSpec['type'] = 'door'): DoorSpec {
+  return { type, mount: p.globals.doorMount ?? 'face', leaves: 1, hinge: 'left' };
+}
+
+/** Cambia el montaje de todas las puertas y cajones del proyecto. Devuelve cuántos cambió. */
+export function setAllDoorsMount(p: Project, mount: DoorSpec['mount']): number {
+  let n = 0;
+  for (const c of [...p.modules, ...p.bridges]) {
+    for (const r of Object.values(c.regions)) if (r.door && r.door.mount !== mount) (r.door.mount = mount), n++;
+    for (const fr of c.fronts ?? []) if (fr.door.mount !== mount) (fr.door.mount = mount), n++;
+  }
+  return n;
 }

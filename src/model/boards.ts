@@ -142,6 +142,17 @@ function carcassBoards(p: Project, L: CarcassLayout, out: Board[]) {
     o?: AddOpts,
   ) => {
     if (box.dx <= 0.01 || box.dy <= 0.01 || box.dz <= 0.01) return;
+    // detrás de una puerta embutida, las piezas interiores se retranquean el grosor de la puerta
+    if (kind !== 'door' && kind !== 'drawerFront' && kind !== 'drawerBox') {
+      for (const r of insetRects) {
+        const ox = Math.min(r.x1, box.x + box.dx) - Math.max(r.x0, box.x);
+        const oz = Math.min(r.z1, box.z + box.dz) - Math.max(r.z0, box.z);
+        if (ox > 0.5 && oz > 0.5 && Math.abs(box.y + box.dy - r.front) < 0.01) {
+          box = { ...box, dy: box.dy - g.thickness.door };
+          break;
+        }
+      }
+    }
     out.push(makeBoard(p, L, `${cid}:${id}`, kind, name, box, src, o));
   };
 
@@ -155,6 +166,16 @@ function carcassBoards(p: Project, L: CarcassLayout, out: Board[]) {
         regions.findIndex((m) => col >= m.c0 && col <= m.c1 && r >= m.r0 && r <= m.r1),
       );
   }
+  // huecos tapados por puertas embutidas (de un hueco o de varios)
+  const insetRects: { x0: number; x1: number; z0: number; z1: number; front: number }[] = [];
+  const insetOf = (m: Merge) =>
+    insetRects.push({ x0: L.cols[m.c0].a, x1: L.cols[m.c1].b, z0: L.rows[m.r0].a, z1: L.rows[m.r1].b, front: L.colY[m.c0].b });
+  for (const [key, props] of Object.entries(c.regions)) {
+    const m = parseKey(key);
+    if (props.door?.mount === 'inset' && m.c1 < C && m.r1 < R && regions.some((reg) => regionKey(reg) === key)) insetOf(m);
+  }
+  for (const fr of c.fronts ?? []) if (fr.door.mount === 'inset' && fr.c1 < C && fr.r1 < R) insetOf(fr);
+
   const hEdge = (rb: number, col: number) => rid[col][rb - 1] !== rid[col][rb];
   const vEdge = (cb: number, r: number) =>
     r >= 0 && r < R && (L.structural[cb] || rid[cb - 1][r] !== rid[cb][r]);
@@ -313,6 +334,13 @@ function carcassBoards(p: Project, L: CarcassLayout, out: Board[]) {
       zl = L.rows[m.r0].a + gap;
       zh = L.rows[m.r1].b - gap;
       dy0 = front - tDoor;
+    } else if (d.mount === 'face') {
+      // delante del mueble y del tamaño interior del hueco: deja vistos los cantos
+      xl = L.cols[m.c0].a;
+      xr = L.cols[m.c1].b;
+      zl = L.rows[m.r0].a;
+      zh = L.rows[m.r1].b;
+      dy0 = front;
     } else {
       const sepFront = (cb: number) => Math.max(L.colY[cb - 1].b, L.colY[cb].b);
       if (m.c0 === 0) xl = L.x0 + gap;
@@ -359,11 +387,11 @@ function carcassBoards(p: Project, L: CarcassLayout, out: Board[]) {
     }
   };
 
-  // ---- puertas que abarcan varios huecos (siempre superpuestas)
+  // ---- puertas que abarcan varios huecos
   for (const fr of c.fronts ?? []) {
     if (fr.c1 >= C || fr.r1 >= R) continue;
     const label = fr.name ?? `F${fr.r0 + 1}-${fr.r1 + 1} C${fr.c0 + 1}-${fr.c1 + 1}`;
-    doorBoards(fr, { ...fr.door, type: 'door', mount: 'overlay' }, label, `front:${fr.id}`, { type: 'front', carcassId: cid, frontId: fr.id }, L.colY[fr.c0].b);
+    doorBoards(fr, { ...fr.door, type: 'door' }, label, `front:${fr.id}`, { type: 'front', carcassId: cid, frontId: fr.id }, L.colY[fr.c0].b);
   }
 
   // ---- contenido de los huecos
