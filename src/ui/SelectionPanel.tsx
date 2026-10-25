@@ -1,9 +1,9 @@
 import type { Draft } from 'immer';
 import { useDerived } from '../derived';
 import { uid } from '../model/defaults';
-import { canMerge, findCarcass, listRegions, rectsIntersect, regionAt, regionBounds, regionKey } from '../model/grid';
-import { cleanRegion, ensureRegion, findCarcassDraft, insertTrack, mergeCells, removeTrack, setTrackSize, splitCells } from '../model/ops';
-import type { Bridge, Carcass, EdgeSet, Merge, Module, Project, RegionProps } from '../model/types';
+import { canMerge, findCarcass, listRegions, rectContains, rectsIntersect, regionAt, regionBounds, regionKey } from '../model/grid';
+import { addSpanningFront, cleanRegion, doorInEachRegion, ensureRegion, removeFronts, findCarcassDraft, insertTrack, mergeCells, removeTrack, setTrackSize, splitCells } from '../model/ops';
+import type { Bridge, Carcass, DoorSpec, EdgeSet, Merge, Module, Project, RegionProps } from '../model/types';
 import { useStore } from '../store';
 import { Field, fmt, NumInput, Section, TextInput } from './common';
 
@@ -287,9 +287,69 @@ function CellsPanel({ c, rect }: { c: Carcass; rect: Merge }) {
           Separar
         </button>
       </div>
-      {isRegion ? <RegionEditor c={c} rect={rect} /> : <p className="hint">Selección de {listRegions(c).filter((r) => rectsIntersect(r, rect)).length} huecos. Fusiónalos para editarlos juntos.</p>}
+      {isRegion ? (
+        <RegionEditor c={c} rect={rect} />
+      ) : (
+        <p className="hint">Selección de {listRegions(c).filter((r) => rectsIntersect(r, rect)).length} huecos. Fusiónalos para editarlos juntos o ponles puertas abajo.</p>
+      )}
       {!isRegion && !mergeable && <p className="warn-text">La selección cruza un cambio de fondo.</p>}
+      <FrontsEditor c={c} rect={rect} multi={!isRegion} />
     </Section>
+  );
+}
+
+const DEFAULT_DOOR: DoorSpec = { type: 'door', mount: 'overlay', leaves: 1, hinge: 'left' };
+
+/** Puertas sobre varios huecos: una en cada hueco o una sola para toda la selección. */
+function FrontsEditor({ c, rect, multi }: { c: Carcass; rect: Merge; multi: boolean }) {
+  const upd = useCarcassUpdate(c.id);
+  const fronts = (c.fronts ?? []).filter((fr) => rectsIntersect(fr, rect));
+  const regs = listRegions(c).filter((r) => rectContains(rect, r));
+  const withDoor = regs.filter((r) => c.regions[regionKey(r)]?.door).length;
+  return (
+    <>
+      {multi && (
+        <>
+          <h4>Puertas en la selección</h4>
+          <div className="btn-row">
+            <button title="Una puerta independiente en cada hueco seleccionado" onClick={() => upd((d) => doorInEachRegion(d, rect, DEFAULT_DOOR))}>
+              Puerta en cada hueco
+            </button>
+            <button onClick={() => upd((d) => doorInEachRegion(d, rect, { ...DEFAULT_DOOR, type: 'drawer' }))}>Cajón en cada hueco</button>
+            <button title="Una sola puerta que tapa toda la selección; las baldas y divisores de dentro se mantienen" onClick={() => upd((d) => addSpanningFront(d, rect, DEFAULT_DOOR, uid()))}>
+              Una puerta para todo
+            </button>
+            <button disabled={!fronts.length && !withDoor} className="danger" onClick={() => upd((d) => removeFronts(d, rect))}>
+              Quitar puertas
+            </button>
+          </div>
+          {withDoor > 0 && <p className="hint">{withDoor} de {regs.length} huecos tienen puerta o cajón propio.</p>}
+        </>
+      )}
+      {fronts.map((fr) => (
+        <div key={fr.id} className="front-row">
+          <span className="ro">
+            Puerta F{fr.r0 + 1}-{fr.r1 + 1} C{fr.c0 + 1}-{fr.c1 + 1}
+          </span>
+          <select
+            value={fr.door.leaves}
+            onChange={(e) => upd((d) => void (d.fronts!.find((x) => x.id === fr.id)!.door.leaves = Number(e.target.value) as 1 | 2))}
+          >
+            <option value={1}>1 hoja</option>
+            <option value={2}>2 hojas</option>
+          </select>
+          {fr.door.leaves === 1 && (
+            <select value={fr.door.hinge} onChange={(e) => upd((d) => void (d.fronts!.find((x) => x.id === fr.id)!.door.hinge = e.target.value as 'left' | 'right'))}>
+              <option value="left">Bisagras izq.</option>
+              <option value="right">Bisagras der.</option>
+            </select>
+          )}
+          <button className="icon" title="Quitar esta puerta" onClick={() => upd((d) => void (d.fronts = d.fronts!.filter((x) => x.id !== fr.id)))}>
+            ✕
+          </button>
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -304,10 +364,12 @@ function RegionEditor({ c, rect }: { c: Carcass; rect: Merge }) {
   const W = rb.x1 - rb.x0;
   const H = rb.z1 - rb.z0;
   const g = p.globals;
-  const updR = (fn: (r: Draft<RegionProps>) => void) =>
+  const updR = (fn: (r: Draft<RegionProps>) => void, dropFronts = false) =>
     upd((d) => {
       fn(ensureRegion(d, key) as Draft<RegionProps>);
       cleanRegion(d, key);
+      // una puerta propia sustituye a la puerta grande que tapaba este hueco
+      if (dropFronts && d.fronts) d.fronts = d.fronts.filter((fr) => !rectsIntersect(fr, rect));
     });
 
   return (
@@ -374,7 +436,7 @@ function RegionEditor({ c, rect }: { c: Carcass; rect: Merge }) {
                 const v = e.target.value;
                 if (v === 'none') r.door = undefined;
                 else r.door = { mount: 'overlay', leaves: 1, hinge: 'left', ...(r.door ?? {}), type: v as 'door' | 'drawer' };
-              })
+              }, true)
             }
           >
             <option value="none">Ninguno</option>

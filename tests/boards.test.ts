@@ -196,3 +196,35 @@ describe('avisos', () => {
     expect(d.warnings.some((w) => w.msg.includes('no cabe en la plancha'))).toBe(true);
   });
 });
+
+describe('puertas sobre varios huecos', () => {
+  it('una puerta en cada hueco o una sola para toda la selección, sin solapes', async () => {
+    const { addSpanningFront, doorInEachRegion, removeFronts, insertTrack } = await import('../src/model/ops');
+    const door = { type: 'door' as const, mount: 'overlay' as const, leaves: 1 as const, hinge: 'left' as const };
+    // 2 filas x 3 columnas de cubos del módulo derecho
+    const p = defaultProject();
+    doorInEachRegion(p.modules[1], { c0: 0, r0: 0, c1: 2, r1: 1 }, door);
+    let r = computeBoards(p);
+    expect(r.boards.filter((b) => b.groupId === 'der' && b.kind === 'door').length).toBe(6);
+    expect(findOverlaps(r.boards)).toEqual([]);
+
+    addSpanningFront(p.modules[1], { c0: 0, r0: 0, c1: 2, r1: 1 }, { ...door, leaves: 2 }, 'f1');
+    r = computeBoards(p);
+    const doors = r.boards.filter((b) => b.groupId === 'der' && b.kind === 'door');
+    expect(doors.length).toBe(2); // dos hojas, las 6 puertas pequeñas desaparecen
+    // las baldas y divisores interiores se mantienen
+    expect(r.boards.filter((b) => b.groupId === 'der' && b.kind === 'divider').length).toBe(21);
+    expect(findOverlaps(r.boards)).toEqual([]);
+    // tapa desde el lateral (holgura 3) hasta la mitad del divisor C3|C4
+    const L = r.layouts.get('der')!;
+    expect(doors[0].box.x).toBeCloseTo(3915 + 3, 6);
+    expect(doors[1].box.x + doors[1].box.dx).toBeCloseTo((L.colSeps[2].a + L.colSeps[2].b) / 2 - 1.5, 6);
+    expect(doors[0].box.z).toBeCloseTo(3, 6);
+
+    // insertar una columna antes desplaza la puerta
+    insertTrack(p.modules[1], 'col', 0);
+    expect(p.modules[1].fronts![0].c0).toBe(1);
+    removeFronts(p.modules[1], { c0: 0, r0: 0, c1: 5, r1: 5 });
+    expect(p.modules[1].fronts).toEqual([]);
+  });
+});

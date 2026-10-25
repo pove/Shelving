@@ -452,3 +452,10 @@ pre.code {
     background: #fff;
   }
 }
+
+.front-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}

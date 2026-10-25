@@ -1,6 +1,6 @@
 // Operaciones de edición sobre el proyecto (pensadas para usarse dentro de immer).
-import { expandToMerges, parseKey, rectContains, rectsIntersect, regionKey } from './grid';
-import type { Carcass, Merge, Project, RegionProps } from './types';
+import { expandToMerges, listRegions, parseKey, rectContains, rectsIntersect, regionKey } from './grid';
+import type { Carcass, DoorSpec, Merge, Project, RegionProps } from './types';
 
 type Axis = 'col' | 'row';
 
@@ -24,6 +24,14 @@ function remap(c: Carcass, axis: Axis, f: (a: number, b: number) => [number, num
     if (n) regions[regionKey(n)] = v;
   }
   c.regions = regions;
+  if (c.fronts) {
+    const fronts = [];
+    for (const fr of c.fronts) {
+      const n = remapRect(fr, axis, f);
+      if (n) fronts.push({ ...fr, ...n });
+    }
+    c.fronts = fronts;
+  }
 }
 
 /** Inserta una pista nueva en la posición index (0..n). */
@@ -85,4 +93,39 @@ export function cleanRegion(c: Carcass, key: string) {
 
 export function findCarcassDraft(p: Project, id: string): Carcass | undefined {
   return p.modules.find((m) => m.id === id) ?? p.bridges.find((b) => b.id === id);
+}
+
+/** Pone la misma puerta/cajón en cada hueco que cae dentro del rectángulo. */
+export function doorInEachRegion(c: Carcass, rect: Merge, door: DoorSpec) {
+  for (const reg of listRegions(c)) {
+    if (!rectContains(rect, reg)) continue;
+    const r = ensureRegion(c, regionKey(reg));
+    r.door = { ...door };
+  }
+  c.fronts = (c.fronts ?? []).filter((fr) => !rectsIntersect(fr, rect));
+}
+
+/** Una sola puerta para toda la selección (las baldas interiores se mantienen). */
+export function addSpanningFront(c: Carcass, rect: Merge, door: DoorSpec, id: string) {
+  for (const reg of listRegions(c)) {
+    if (!rectsIntersect(rect, reg)) continue;
+    const k = regionKey(reg);
+    if (c.regions[k]?.door) {
+      delete c.regions[k].door;
+      cleanRegion(c, k);
+    }
+  }
+  c.fronts = (c.fronts ?? []).filter((fr) => !rectsIntersect(fr, rect));
+  c.fronts.push({ id, ...rect, door: { ...door, type: 'door', mount: 'overlay' } });
+}
+
+export function removeFronts(c: Carcass, rect: Merge) {
+  c.fronts = (c.fronts ?? []).filter((fr) => !rectsIntersect(fr, rect));
+  for (const reg of listRegions(c)) {
+    const k = regionKey(reg);
+    if (rectContains(rect, reg) && c.regions[k]?.door) {
+      delete c.regions[k].door;
+      cleanRegion(c, k);
+    }
+  }
 }

@@ -45,3 +45,10 @@ La vista 3D, el alzado, el despiece, los cortes y el script de Fusion se aliment
 - `tests/fusion.test.ts`: ejecuta el `.py` generado con Python contra un stub de la API de
   Fusion (`tests/fusion_stub/`) en modo paramétrico y directo, y compara la geometría.
 - `tests/cutlist.test.ts`, `tests/nesting.test.ts`: despiece/CSV y cortes sin solapes.
+
+## Integración continua y publicación
+
+- `.github/workflows/ci.yml`: en cada push a cualquier rama y en cada PR ejecuta typecheck, tests y build.
+- `.github/workflows/pages.yml`: en cada push a `main` publica `dist/` en GitHub Pages
+  (`https://pove.github.io/Shelving/`). Hay que activarlo una vez en
+  *Settings → Pages → Build and deployment → Source: GitHub Actions*.

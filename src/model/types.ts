@@ -57,6 +57,13 @@ export interface FloatingCube {
   height: number;
 }
 
+/** Puerta que tapa varios huecos sin eliminar las baldas/divisores interiores. */
+export interface Front extends Merge {
+  id: string;
+  name?: string;
+  door: DoorSpec;
+}
+
 export interface RegionProps {
   name?: string;
   inserts: Insert[];
@@ -75,6 +82,8 @@ export interface CarcassBase {
   merges: Merge[];
   /** Propiedades de huecos, clave "c0:r0:c1:r1". */
   regions: Record<string, RegionProps>;
+  /** Puertas que abarcan varios huecos. */
+  fronts?: Front[];
 }
 
 export interface Module extends CarcassBase {
@@ -230,7 +239,8 @@ export type BoardSource =
   | { type: 'rowSep'; carcassId: string; index: number }
   | { type: 'colSep'; carcassId: string; index: number }
   | { type: 'topBottom'; carcassId: string }
-  | { type: 'region'; carcassId: string; key: string; insertId?: string };
+  | { type: 'region'; carcassId: string; key: string; insertId?: string }
+  | { type: 'front'; carcassId: string; frontId: string };
 
 export interface Board {
   id: string;

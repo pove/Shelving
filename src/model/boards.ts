@@ -8,7 +8,7 @@ import {
   regionKey,
   type CarcassLayout,
 } from './grid';
-import type { Board, BoardKind, BoardSource, Box, EdgeSet, Project } from './types';
+import type { Board, BoardKind, BoardSource, Box, DoorSpec, EdgeSet, Merge, Project } from './types';
 
 export interface BoardsResult {
   boards: Board[];
@@ -302,6 +302,70 @@ function carcassBoards(p: Project, L: CarcassLayout, out: Board[]) {
     }
   }
 
+  /** Frente(s) de puerta o cajón sobre el rectángulo de celdas m. */
+  const doorBoards = (m: Merge, d: DoorSpec, label: string, idp: string, src: BoardSource, front: number) => {
+    const gap = g.doorGap;
+    const tDoor = g.thickness.door;
+    let xl: number, xr: number, zl: number, zh: number, dy0: number;
+    if (d.mount === 'inset') {
+      xl = L.cols[m.c0].a + gap;
+      xr = L.cols[m.c1].b - gap;
+      zl = L.rows[m.r0].a + gap;
+      zh = L.rows[m.r1].b - gap;
+      dy0 = front - tDoor;
+    } else {
+      const sepFront = (cb: number) => Math.max(L.colY[cb - 1].b, L.colY[cb].b);
+      if (m.c0 === 0) xl = L.x0 + gap;
+      else {
+        const s = L.colSeps[m.c0 - 1];
+        xl = sepFront(m.c0) > front + 0.01 ? s.b + gap : (s.a + s.b) / 2 + gap / 2;
+      }
+      if (m.c1 === C - 1) xr = L.x1 - gap;
+      else {
+        const s = L.colSeps[m.c1];
+        xr = sepFront(m.c1 + 1) > front + 0.01 ? s.a - gap : (s.a + s.b) / 2 - gap / 2;
+      }
+      if (m.r0 === 0) zl = L.z0 + gap;
+      else {
+        const s = L.rowSeps[m.r0 - 1];
+        zl = (s.a + s.b) / 2 + gap / 2;
+      }
+      if (m.r1 === R - 1) zh = L.z1 - gap;
+      else {
+        const s = L.rowSeps[m.r1];
+        zh = (s.a + s.b) / 2 - gap / 2;
+      }
+      dy0 = front;
+    }
+    const isDrawer = d.type === 'drawer';
+    const leaves = isDrawer ? 1 : d.leaves;
+    const lw = (xr - xl - (leaves - 1) * gap) / leaves;
+    const hgt = zh - zl;
+    const hinges = hgt <= 900 ? 2 : hgt <= 1600 ? 3 : hgt <= 2000 ? 4 : 5;
+    for (let k = 0; k < leaves; k++) {
+      const side = leaves === 2 ? (k === 0 ? 'izquierda' : 'derecha') : d.hinge === 'left' ? 'izquierda' : 'derecha';
+      const notes = isDrawer ? ['Frente de cajón: canto 4 lados'] : ['Puerta: canto 4 lados', `${hinges} bisagras a la ${side}`];
+      const nm = isDrawer
+        ? `Frente cajón ${lc(label)}`
+        : `Puerta ${lc(label)}${leaves === 2 ? (k === 0 ? ' izq.' : ' der.') : ''}`;
+      add(
+        `${idp}:${k}`,
+        isDrawer ? 'drawerFront' : 'door',
+        nm,
+        { x: xl + k * (lw + gap), y: dy0, z: zl, dx: lw, dy: tDoor, dz: hgt },
+        src,
+        { allEdges: true, material: 'doors', notes },
+      );
+    }
+  };
+
+  // ---- puertas que abarcan varios huecos (siempre superpuestas)
+  for (const fr of c.fronts ?? []) {
+    if (fr.c1 >= C || fr.r1 >= R) continue;
+    const label = fr.name ?? `F${fr.r0 + 1}-${fr.r1 + 1} C${fr.c0 + 1}-${fr.c1 + 1}`;
+    doorBoards(fr, { ...fr.door, type: 'door', mount: 'overlay' }, label, `front:${fr.id}`, { type: 'front', carcassId: cid, frontId: fr.id }, L.colY[fr.c0].b);
+  }
+
   // ---- contenido de los huecos
   for (const [key, props] of Object.entries(c.regions)) {
     const m = parseKey(key);
@@ -379,62 +443,8 @@ function carcassBoards(p: Project, L: CarcassLayout, out: Board[]) {
     // puerta / cajón
     const d = props.door;
     if (d) {
-      const gap = g.doorGap;
-      let xl: number, xr: number, zl: number, zh: number, dy0: number;
-      if (d.mount === 'inset') {
-        xl = rb.x0 + gap;
-        xr = rb.x1 - gap;
-        zl = rb.z0 + gap;
-        zh = rb.z1 - gap;
-        dy0 = rb.y.b - tDoor;
-      } else {
-        const front = rb.y.b;
-        const sepFront = (cb: number) => Math.max(L.colY[cb - 1].b, L.colY[cb].b);
-        if (m.c0 === 0) xl = L.x0 + gap;
-        else {
-          const s = L.colSeps[m.c0 - 1];
-          xl = sepFront(m.c0) > front + 0.01 ? s.b + gap : (s.a + s.b) / 2 + gap / 2;
-        }
-        if (m.c1 === C - 1) xr = L.x1 - gap;
-        else {
-          const s = L.colSeps[m.c1];
-          xr = sepFront(m.c1 + 1) > front + 0.01 ? s.a - gap : (s.a + s.b) / 2 - gap / 2;
-        }
-        if (m.r0 === 0) zl = L.z0 + gap;
-        else {
-          const s = L.rowSeps[m.r0 - 1];
-          zl = (s.a + s.b) / 2 + gap / 2;
-        }
-        if (m.r1 === R - 1) zh = L.z1 - gap;
-        else {
-          const s = L.rowSeps[m.r1];
-          zh = (s.a + s.b) / 2 - gap / 2;
-        }
-        dy0 = front;
-      }
-      const isDrawer = d.type === 'drawer';
-      const leaves = isDrawer ? 1 : d.leaves;
-      const lw = (xr - xl - (leaves - 1) * gap) / leaves;
-      const hgt = zh - zl;
-      const hinges = hgt <= 900 ? 2 : hgt <= 1600 ? 3 : hgt <= 2000 ? 4 : 5;
-      for (let k = 0; k < leaves; k++) {
-        const side = leaves === 2 ? (k === 0 ? 'izquierda' : 'derecha') : d.hinge === 'left' ? 'izquierda' : 'derecha';
-        const notes = isDrawer
-          ? ['Frente de cajón: canto 4 lados']
-          : ['Puerta: canto 4 lados', `${hinges} bisagras a la ${side}`];
-        const nm = isDrawer
-          ? `Frente cajón ${lc(label)}`
-          : `Puerta ${lc(label)}${leaves === 2 ? (k === 0 ? ' izq.' : ' der.') : ''}`;
-        add(
-          `door:${key}:${k}`,
-          isDrawer ? 'drawerFront' : 'door',
-          nm,
-          { x: xl + k * (lw + gap), y: dy0, z: zl, dx: lw, dy: tDoor, dz: hgt },
-          srcBase,
-          { allEdges: true, material: 'doors', notes },
-        );
-      }
-      if (isDrawer) drawerBox(p, L, add, key, label, rb, inset ? rb.y.b - tDoor : rb.y.b, srcBase);
+      doorBoards(m, d, label, `door:${key}`, srcBase, rb.y.b);
+      if (d.type === 'drawer') drawerBox(p, L, add, key, label, rb, inset ? rb.y.b - tDoor : rb.y.b, srcBase);
     }
   }
 }
