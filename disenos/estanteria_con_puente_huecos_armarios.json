@@ -1,0 +1,498 @@
+{
+  "version": 1,
+  "name": "Estantería con puente",
+  "globals": {
+    "thickness": {
+      "side": 28,
+      "topBottom": 19,
+      "shelf": 19,
+      "divider": 19,
+      "door": 19,
+      "drawer": 16
+    },
+    "depth": 330,
+    "ceiling": 2500,
+    "ceilingGap": 0,
+    "doorGap": 3,
+    "plinth": {
+      "notch": true,
+      "notchHeight": 70,
+      "notchDepth": 20,
+      "skirtingHeight": 65,
+      "skirtingThickness": 15
+    },
+    "rounding": 5,
+    "doorMount": "inset"
+  },
+  "modules": [
+    {
+      "kind": "module",
+      "id": "izq",
+      "name": "Izquierdo",
+      "x": 0,
+      "width": 1698,
+      "height": 2487,
+      "depth": 330,
+      "cols": [
+        {
+          "size": 705,
+          "fixed": true,
+          "depth": 281,
+          "align": "back",
+          "zone": "Armario"
+        },
+        {
+          "size": 315,
+          "fixed": true
+        },
+        {
+          "size": 315,
+          "fixed": true
+        },
+        {
+          "size": 0,
+          "fixed": false
+        }
+      ],
+      "rows": [
+        {
+          "size": 330,
+          "fixed": true
+        },
+        {
+          "size": 330,
+          "fixed": true
+        },
+        {
+          "size": 155,
+          "fixed": true
+        },
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 330,
+          "fixed": true
+        },
+        {
+          "size": 300,
+          "fixed": true
+        }
+      ],
+      "colSeps": [
+        {},
+        {},
+        {}
+      ],
+      "rowSeps": [
+        {
+          "name": "Balda 1"
+        },
+        {
+          "name": "Balda 2"
+        },
+        {
+          "name": "Encimera",
+          "thickness": 28
+        },
+        {
+          "name": "Balda superior"
+        },
+        {
+          "name": "Balda franja"
+        }
+      ],
+      "merges": [
+        {
+          "c0": 0,
+          "r0": 0,
+          "c1": 0,
+          "r1": 3
+        },
+        {
+          "c0": 1,
+          "r0": 3,
+          "c1": 3,
+          "r1": 3
+        },
+        {
+          "c0": 2,
+          "r0": 1,
+          "c1": 3,
+          "r1": 1
+        },
+        {
+          "c0": 2,
+          "r0": 0,
+          "c1": 3,
+          "r1": 0
+        },
+        {
+          "c0": 2,
+          "r0": 2,
+          "c1": 3,
+          "r1": 2
+        },
+        {
+          "c0": 2,
+          "r0": 5,
+          "c1": 3,
+          "r1": 5
+        },
+        {
+          "c0": 1,
+          "r0": 4,
+          "c1": 2,
+          "r1": 4
+        }
+      ],
+      "regions": {
+        "0:0:0:3": {
+          "name": "Armario bajo",
+          "inserts": []
+        },
+        "1:3:3:3": {
+          "name": "Zona abierta",
+          "inserts": [],
+          "floating": {
+            "attach": "left",
+            "width": 315,
+            "height": 330
+          }
+        }
+      },
+      "fronts": [
+        {
+          "id": "6mzjan8",
+          "c0": 2,
+          "r0": 0,
+          "c1": 3,
+          "r1": 1,
+          "door": {
+            "type": "door",
+            "mount": "inset",
+            "leaves": 1,
+            "hinge": "left"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "module",
+      "id": "der",
+      "name": "Derecho",
+      "x": 3912,
+      "width": 1777,
+      "height": 2487,
+      "depth": 330,
+      "cols": [
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 0,
+          "fixed": false
+        }
+      ],
+      "rows": [
+        {
+          "size": 330,
+          "fixed": true
+        },
+        {
+          "size": 330,
+          "fixed": true
+        },
+        {
+          "size": 155,
+          "fixed": true
+        },
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 330,
+          "fixed": true
+        },
+        {
+          "size": 300,
+          "fixed": true
+        }
+      ],
+      "colSeps": [
+        {},
+        {},
+        {},
+        {}
+      ],
+      "rowSeps": [
+        {
+          "name": "Balda 1"
+        },
+        {
+          "name": "Balda 2"
+        },
+        {
+          "name": "Encimera",
+          "thickness": 28
+        },
+        {
+          "name": "Balda superior"
+        },
+        {
+          "name": "Balda franja"
+        }
+      ],
+      "merges": [
+        {
+          "c0": 0,
+          "r0": 3,
+          "c1": 3,
+          "r1": 3
+        },
+        {
+          "c0": 0,
+          "r0": 0,
+          "c1": 0,
+          "r1": 1
+        },
+        {
+          "c0": 1,
+          "r0": 2,
+          "c1": 2,
+          "r1": 2
+        },
+        {
+          "c0": 2,
+          "r0": 1,
+          "c1": 3,
+          "r1": 1
+        },
+        {
+          "c0": 1,
+          "r0": 5,
+          "c1": 2,
+          "r1": 5
+        },
+        {
+          "c0": 2,
+          "r0": 4,
+          "c1": 3,
+          "r1": 4
+        },
+        {
+          "c0": 3,
+          "r0": 5,
+          "c1": 4,
+          "r1": 5
+        },
+        {
+          "c0": 0,
+          "r0": 4,
+          "c1": 1,
+          "r1": 4
+        },
+        {
+          "c0": 1,
+          "r0": 0,
+          "c1": 2,
+          "r1": 0
+        }
+      ],
+      "regions": {
+        "0:3:3:3": {
+          "name": "Zona abierta",
+          "inserts": [],
+          "floating": {
+            "attach": "right",
+            "width": 330,
+            "height": 330
+          }
+        },
+        "4:3:4:3": {
+          "name": "Nicho",
+          "inserts": []
+        },
+        "0:0:0:1": {
+          "inserts": [],
+          "door": {
+            "type": "door",
+            "mount": "inset",
+            "leaves": 1,
+            "hinge": "left"
+          }
+        }
+      },
+      "fronts": [
+        {
+          "id": "58rhskt",
+          "c0": 4,
+          "r0": 0,
+          "c1": 4,
+          "r1": 1,
+          "door": {
+            "type": "door",
+            "mount": "inset",
+            "leaves": 1,
+            "hinge": "left"
+          }
+        }
+      ]
+    }
+  ],
+  "bridges": [
+    {
+      "kind": "bridge",
+      "id": "puente",
+      "name": "Puente",
+      "leftId": "izq",
+      "rightId": "der",
+      "z": 2149,
+      "height": 338,
+      "depth": 330,
+      "cols": [
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 0,
+          "fixed": false
+        },
+        {
+          "size": 0,
+          "fixed": false
+        }
+      ],
+      "rows": [
+        {
+          "size": 0,
+          "fixed": false
+        }
+      ],
+      "colSeps": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "rowSeps": [],
+      "merges": [],
+      "regions": {}
+    }
+  ],
+  "environment": {
+    "show": true,
+    "wallThickness": 100,
+    "wallX0": 0,
+    "wallX1": 5695,
+    "openings": [
+      {
+        "id": "p1",
+        "x": 1750,
+        "width": 2115,
+        "height": 2130,
+        "leaves": 2
+      }
+    ],
+    "sideWall": {
+      "enabled": true,
+      "side": "left",
+      "door": {
+        "enabled": true,
+        "distance": 310,
+        "leaf": 730,
+        "thickness": 70,
+        "height": 2130
+      }
+    },
+    "showDoors": false
+  },
+  "materials": {
+    "furniture": [
+      "bambu claro semibrillante",
+      "bambu claro",
+      "bamboo light",
+      "bambu",
+      "bamboo"
+    ],
+    "doors": [
+      "bambu claro semibrillante",
+      "bambu claro",
+      "bamboo light",
+      "bambu",
+      "bamboo"
+    ],
+    "wall": [
+      "recubrimiento polvo rugoso blanco",
+      "polvo rugoso blanco",
+      "powder coat rough white",
+      "polvo rugoso"
+    ],
+    "floor": [
+      "superficie mate",
+      "mate"
+    ],
+    "color": "#dcc28f",
+    "doorColor": "#e6cfa0"
+  },
+  "settings": {
+    "minHoleWidth": 200,
+    "minHoleHeight": 150,
+    "maxSpan19": 800,
+    "kerf": 4,
+    "trim": 10,
+    "sheets": [
+      {
+        "thickness": 16,
+        "length": 2800,
+        "width": 2070
+      },
+      {
+        "thickness": 19,
+        "length": 2800,
+        "width": 2070
+      },
+      {
+        "thickness": 28,
+        "length": 2600,
+        "width": 2100
+      }
+    ],
+    "rotateByDefault": false
+  },
+  "overrides": {}
+}

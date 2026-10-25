@@ -56,6 +56,18 @@ absorbe la diferencia también salga redonda; los módulos a la derecha de un pu
 justo para que el puente también reparta redondo, y el puente sigue alineado con su balda y con
 el techo. Enseña la lista de cambios y se puede deshacer.
 
+## Diseños guardados (`disenos/`)
+
+Los `.json` de la carpeta `disenos/` aparecen en el desplegable «Cargar diseño» (sección
+Proyecto), junto al ejemplo de Estanteria.py. Para añadir uno:
+
+1. En la app, «Exportar .json».
+2. En GitHub, abre la carpeta `disenos/` → *Add file → Upload files* → sube el `.json`
+   (el nombre del archivo es el que sale en el desplegable: `_` se convierten en espacios).
+3. Al guardarlo en `main` se vuelve a publicar la web sola y aparece en el desplegable.
+
+El test `tests/disenos.test.ts` carga cada diseño de la carpeta y falla si alguno tiene errores.
+
 ## Montaje de puertas
 
 Cada puerta o cajón tiene su montaje (y en «Puertas» se elige el de las nuevas y se pueden

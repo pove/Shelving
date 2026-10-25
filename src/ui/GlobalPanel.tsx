@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { defaultProject, newModule, uid } from '../model/defaults';
+import { DESIGNS } from '../designs';
 import { roundAll, setAllDoorsMount } from '../model/ops';
 import type { Project } from '../model/types';
 import { migrate, useStore } from '../store';
@@ -37,6 +38,28 @@ export default function GlobalPanel() {
       <Section title="Proyecto">
         <Field label="Nombre">
           <TextInput value={p.name} onChange={(v) => update((d) => void (d.name = v))} width={150} />
+        </Field>
+        <Field label="Cargar diseño" hint="Diseños guardados en la carpeta disenos/ del repositorio. Se puede deshacer.">
+          <select
+            value=""
+            onChange={async (e) => {
+              const v = e.target.value;
+              if (!v) return;
+              try {
+                replace(v === '__ejemplo' ? defaultProject() : await DESIGNS.find((d) => d.file === v)!.load());
+              } catch (err) {
+                alert('No se pudo cargar el diseño: ' + (err as Error).message);
+              }
+            }}
+          >
+            <option value="">Elegir…</option>
+            <option value="__ejemplo">Ejemplo (Estanteria.py)</option>
+            {DESIGNS.map((d) => (
+              <option key={d.file} value={d.file}>
+                {d.label}
+              </option>
+            ))}
+          </select>
         </Field>
         <div className="btn-row">
           <button onClick={() => download(`${slug(p.name)}.json`, JSON.stringify(p, null, 2), 'application/json')}>Exportar .json</button>
@@ -96,13 +119,6 @@ export default function GlobalPanel() {
             }}
           >
             + Puente
-          </button>
-          <button
-            onClick={() => {
-              if (confirm('¿Sustituir el proyecto por el ejemplo inicial? (se puede deshacer)')) replace(defaultProject());
-            }}
-          >
-            Ejemplo
           </button>
         </div>
       </Section>
