@@ -30,7 +30,7 @@ export function fusionScript(p: Project, boards: Board[], env: EnvResult, date =
   });
 
   const envRows = env.boxes.map(
-    (e) => `    (${s(e.name)}, ${s(e.kind === 'floor' ? 'suelo' : 'pared')}, ${n(e.box.x)}, ${n(fy(e.box.y, e.box.dy))}, ${n(e.box.z)}, ${n(e.box.dx)}, ${n(e.box.dy)}, ${n(e.box.dz)}),`,
+    (e) => `    (${s(e.name)}, ${s(e.kind === 'floor' ? 'suelo' : 'pared')}, ${n(e.box.x)}, ${n(fy(e.box.y, e.box.dy))}, ${n(e.box.z)}, ${n(e.box.dx)}, ${n(e.box.dy)}, ${n(e.box.dz)}, ${e.door ? 'True' : 'False'}),`,
   );
   let leaf = 'None';
   if (env.leaf) {
@@ -63,6 +63,7 @@ NUEVO_DOCUMENTO = True    # True = construye en un diseño nuevo. Con False usa 
                           # (si ya tiene piezas, pregunta antes: quedarían piezas viejas mezcladas)
 ENTORNO         = ${p.environment.show ? 'True' : 'False'}    # pared, suelo, rodapié y puertas (no entra en el despiece)
 PUERTAS_VISIBLES = ${opts.showDoors === false ? 'False' : 'True'}   # las puertas de cada módulo van en su componente «Puertas»: enciéndelo/apágalo con la bombilla
+ENTORNO_PUERTAS_VISIBLES = ${p.environment.showDoors === false ? 'False' : 'True'}   # hojas del hueco de puerta y balconera, en «Puertas del entorno»
 GUARDAR_CSV     = True
 FONDO           = ${n(REF)}
 
@@ -81,7 +82,7 @@ TABLEROS = [
 ${rows.join('\n')}
 ]
 
-# (nombre, apariencia, x, y, z, dx, dy, dz)
+# (nombre, apariencia, x, y, z, dx, dy, dz, es puerta)
 ENTORNO_CAJAS = [
 ${envRows.join('\n')}
 ]
@@ -265,14 +266,25 @@ def run(context):
         env = {"pared": [], "suelo": []}
         if ENTORNO and (ENTORNO_CAJAS or ENTORNO_HOJA):
             e = grupo(root, "Entorno (no fabricar)")
-            for nombre, ap, x, y, z, dx, dy, dz in ENTORNO_CAJAS:
-                b = _componente(e, nombre, _caja_tmp(x, y, z, dx, dy, dz))
+            ep = None  # componente «Puertas del entorno», creado al encontrar la primera
+            for nombre, ap, x, y, z, dx, dy, dz, es_puerta in ENTORNO_CAJAS:
+                destino = e
+                if es_puerta:
+                    ep = ep or grupo_occ(e, "Puertas del entorno")
+                    destino = ep.component
+                b = _componente(destino, nombre, _caja_tmp(x, y, z, dx, dy, dz))
                 if b:
                     env[ap].append(b)
             if ENTORNO_HOJA:
-                b = hoja_girada(e, *ENTORNO_HOJA)
+                ep = ep or grupo_occ(e, "Puertas del entorno")
+                b = hoja_girada(ep.component, *ENTORNO_HOJA)
                 if b:
                     env["pared"].append(b)
+            if ep:
+                try:
+                    ep.isLightBulbOn = ENTORNO_PUERTAS_VISIBLES
+                except:
+                    pass
 
         ruta = "(no guardado)"
         if GUARDAR_CSV:

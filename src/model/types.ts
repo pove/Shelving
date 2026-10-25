@@ -149,6 +149,8 @@ export interface SideDoor {
 
 export interface Environment {
   show: boolean;
+  /** Mostrar las puertas del entorno (hojas del hueco de puerta y balconera). Por defecto, sí. */
+  showDoors?: boolean;
   wallThickness: number;
   wallX0: number;
   wallX1: number;

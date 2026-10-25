@@ -5,6 +5,8 @@ export interface EnvBox {
   name: string;
   kind: 'wall' | 'floor';
   box: Box;
+  /** Hoja de puerta del entorno (se puede ocultar). */
+  door?: boolean;
 }
 
 /** Hoja girada: bisagra en (hx, hy), dirección de la hoja d, dirección del grosor t. */
@@ -146,6 +148,7 @@ export function computeEnvironment(p: Project, boards: Board[]): EnvResult {
       boxes.push({
         name: `Puerta ${k + 1}${suf}`,
         kind: 'wall',
+        door: true,
         box: { x: o.x + 3 + k * (o.width / n - 1), y: -70, z: 0, dx: hoja, dy: 40, dz: o.height - 5 },
       });
   });
