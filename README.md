@@ -50,8 +50,11 @@ La vista 3D, el alzado, el despiece, los cortes y el script de Fusion se aliment
 
 En «Medidas y holguras», «Redondear repartos» (medio cm o cm) redondea las filas y columnas
 que se reparten solas; la última de cada módulo absorbe la diferencia para que el total cuadre.
-«Redondear también las medidas fijas» redondea las que se fijaron a mano y mueve los puentes
-para que sigan alineados con su balda y con el techo de los módulos.
+«Redondear todo» redondea también las medidas fijas, los cubos flotantes y las baldas añadidas,
+y reduce unos mm (menos del paso) el ancho y el alto de los módulos para que la columna/fila que
+absorbe la diferencia también salga redonda; los módulos a la derecha de un puente se mueven lo
+justo para que el puente también reparta redondo, y el puente sigue alineado con su balda y con
+el techo. Enseña la lista de cambios y se puede deshacer.
 
 ## Uso en el móvil
 

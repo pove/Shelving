@@ -1,6 +1,6 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { defaultProject, newModule, uid } from '../model/defaults';
-import { roundFixedTracks } from '../model/ops';
+import { roundAll } from '../model/ops';
 import type { Project } from '../model/types';
 import { migrate, useStore } from '../store';
 import EnvironmentPanel from './EnvironmentPanel';
@@ -12,6 +12,7 @@ export default function GlobalPanel() {
   const replace = useStore((s) => s.replace);
   const select = useStore((s) => s.select);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [roundMsg, setRoundMsg] = useState<string[] | null>(null);
   const g = p.globals;
   const T = g.thickness;
 
@@ -151,11 +152,27 @@ export default function GlobalPanel() {
         </Field>
         {(g.rounding ?? 0) > 0 && (
           <button
-            title="Redondea también las medidas que fijaste a mano (se puede deshacer)"
-            onClick={() => update((d) => roundFixedTracks(d as Project, d.globals.rounding ?? 0))}
+            title="Redondea también las medidas fijas, los cubos flotantes y las baldas añadidas, y ajusta unos mm el ancho y el alto de los módulos para que todo salga redondo (se puede deshacer)"
+            onClick={() => {
+              let changes: string[] = [];
+              update((d) => void (changes = roundAll(d as Project, d.globals.rounding ?? 0)));
+              setRoundMsg(changes.length ? changes : ['Ya estaba todo redondeado.']);
+            }}
           >
-            Redondear también las medidas fijas
+            Redondear todo
           </button>
+        )}
+        {roundMsg && (
+          <div className="round-msg">
+            <ul>
+              {roundMsg.map((m) => (
+                <li key={m}>{m}</li>
+              ))}
+            </ul>
+            <button className="link" onClick={() => setRoundMsg(null)}>
+              Cerrar
+            </button>
+          </div>
         )}
       </Section>
 

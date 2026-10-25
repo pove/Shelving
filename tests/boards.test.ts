@@ -263,26 +263,31 @@ describe('redondeo de medidas', () => {
     expect(r5.mismatch).toBe(0);
   });
 
-  it('el proyecto inicial redondeado sigue sin solapes y con los totales exactos', async () => {
-    const { roundFixedTracks } = await import('../src/model/ops');
-    const p = defaultProject();
-    p.globals.rounding = 10;
-    roundFixedTracks(p, 10);
-    const { boards, layouts } = computeBoards(p);
-    expect(findOverlaps(boards)).toEqual([]);
-    for (const L of layouts.values()) {
-      expect(L.colW.mismatch).toBe(0);
-      expect(L.rowH.mismatch).toBe(0);
-    }
-    const der = layouts.get('der')!;
-    expect(der.colW.sizes).toEqual([330, 330, 330, 330, 328]);
-    const izq = layouts.get('izq')!;
-    expect(izq.colW.sizes.slice(0, 3)).toEqual([710, 310, 310]);
-    // el puente sigue alineado con la balda franja y con el techo de los módulos
-    const franja = boards.find((b) => b.groupId === 'izq' && b.name === 'Balda franja')!;
-    const base = boards.find((b) => b.groupId === 'puente' && b.name === 'Base')!;
-    expect(base.box.z).toBeCloseTo(franja.box.z, 6);
-    expect(layouts.get('puente')!.z1).toBeCloseTo(2490, 6);
-    expect(layouts.get('puente')!.rowH.sizes[0]).toBeCloseTo(300, 6);
-  });
+  for (const step of [5, 10]) {
+    it(`«Redondear todo» a ${step} mm: todas las medidas interiores redondas, sin solapes y alineado`, async () => {
+      const { roundAll } = await import('../src/model/ops');
+      const p = defaultProject();
+      p.globals.rounding = step;
+      const changes = roundAll(p, step);
+      expect(changes.length).toBeGreaterThan(0);
+      const { boards, layouts } = computeBoards(p);
+      expect(findOverlaps(boards)).toEqual([]);
+      for (const L of layouts.values()) {
+        expect(L.colW.mismatch).toBe(0);
+        expect(L.rowH.mismatch).toBe(0);
+        for (const v of [...L.colW.sizes, ...L.rowH.sizes]) expect(Math.abs(v / step - Math.round(v / step))).toBeLessThan(1e-6);
+      }
+      // nunca crece: los módulos caben en el mismo sitio
+      const izq = p.modules[0], der = p.modules[1];
+      expect(izq.x).toBe(0);
+      expect(izq.width).toBeLessThanOrEqual(1700);
+      expect(der.x + der.width).toBeLessThanOrEqual(3915 + 1780);
+      expect(izq.height).toBeLessThanOrEqual(2490);
+      // el puente sigue alineado con la balda franja y con el techo de los módulos
+      const franja = boards.find((b) => b.groupId === 'izq' && b.name === 'Balda franja')!;
+      const base = boards.find((b) => b.groupId === 'puente' && b.name === 'Base')!;
+      expect(base.box.z).toBeCloseTo(franja.box.z, 6);
+      expect(layouts.get('puente')!.z1).toBeCloseTo(izq.height, 6);
+    });
+  }
 });
